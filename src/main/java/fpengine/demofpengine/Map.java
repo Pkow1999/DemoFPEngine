@@ -25,11 +25,6 @@ public class Map {
             map[5][5] = '#';
             map[6][5] = '#';
             map[7][5] = '#';
-        try {
-            Map test = new Map("C:\\Users\\pkow1\\Desktop\\mapka\\plansza1.txt");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 
@@ -107,6 +102,20 @@ public class Map {
         }
         System.out.println(Width + "x" + Height);
     }
+    public String export()
+    {
+        StringBuilder MiniMap = new StringBuilder();
+        for(int i = 0;i < Height; i++)
+        {
+            for(int j = 0;j<Width; j++)
+            {
+                MiniMap.append(map[i][j]);
+                MiniMap.append(" ");
+            }
+            MiniMap.append("\n");
+        }
+        return MiniMap.toString();
+    }
     private boolean checker(boolean[][] grid, int x, int y)
     {
         if(x + 1 < Width)
@@ -132,10 +141,7 @@ public class Map {
         }
         if(y + 1 < Height)
         {
-            if (!grid[y + 1][x])
-            {
-                return true;
-            }
+            return !grid[y + 1][x];
         }
         return false;
     }
@@ -189,7 +195,7 @@ public class Map {
                 {
                     if(x + 1 < Width)
                     {
-                        if(grid[y][x + 1] == false)
+                        if(!grid[y][x + 1])
                         {
 
                             map[2*y + 1][2*x+1 +1] = '.';//2*x+1 - koordynaty punktow
@@ -204,7 +210,7 @@ public class Map {
                 {
                     if(x - 1 >= 0)
                     {
-                        if(grid[y][x - 1] == false)
+                        if(!grid[y][x - 1])
                         {
 
                             map[2*y + 1][2*x+1 -1] = '.';//2*x+1 - koordynaty punktow
@@ -219,7 +225,7 @@ public class Map {
                 {
                     if(y - 1 >= 0)
                     {
-                        if(grid[y - 1][x] == false)
+                        if(!grid[y - 1][x])
                         {
 
                             map[2*y+1 -1][2*x+1] = '.';//2*x+1 - koordynaty punktow
@@ -234,7 +240,7 @@ public class Map {
                 {
                     if(y + 1 < Height)
                     {
-                        if(grid[y + 1][x] == false)
+                        if(!grid[y + 1][x])
                         {
 
                             map[2*y+1 +1][2*x+1] = '.';//2*x+1 - koordynaty punktow

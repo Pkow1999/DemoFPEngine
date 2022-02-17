@@ -2,6 +2,8 @@ package fpengine.demofpengine;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Pair;
 
 import java.io.IOException;
@@ -20,7 +22,7 @@ public class Engine {
 
     private boolean left,right,forward,backward,strafeLeft,strafeRight;
 
-    int sizeOfBlock = 5;
+    int sizeOfBlock = 2;
     double Height;
     double Width;
 
@@ -35,6 +37,8 @@ public class Engine {
         gc = context;
         Height = gc.getCanvas().getHeight();
         Width = gc.getCanvas().getHeight();
+        gc.setTextAlign(TextAlignment.LEFT);
+        gc.setFont(Font.font("Consolas",7));
     }
     void draw()//dygresja co do petli: cost efficient byloby na przyklad nie rysowanie co klatki 1 piksela tylko na przyklad jakiegos bloku
     {
@@ -157,9 +161,14 @@ public class Engine {
             }
 
         }
+        gc.setFill(Color.WHITE);
+        gc.fillText(plansza.export(),0,5);
+
     }
     public void move(double fps)
     {
+        int oldPLayerX = (int) playerX;
+        int oldPlayerY = (int) playerY;
         if(left)
         {
             playerAngle -= 0.1 * fps;
@@ -220,6 +229,8 @@ public class Engine {
                 playerY -= Math.sin(playerAngle) * 0.2;
             }
         }
+        plansza.map[oldPlayerY][oldPLayerX] = '.';
+        plansza.map[(int) playerY][(int) playerX] = 'P';
         if(plansza.map[(int) playerY][(int) playerX] == 'd')
         {
             plansza.map[(int) playerY][(int) playerX] = '.';
