@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.canvas.Canvas?>
+<VBox fx:id="vbox" alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="fpengine.demofpengine.Controller">
+    <Canvas fx:id="canvas"  width="800" height="600"/>
+</VBox>

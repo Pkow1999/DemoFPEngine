@@ -1,0 +1,9 @@
+module fpengine.demofpengine {
+    requires javafx.controls;
+    requires javafx.fxml;
+
+    requires org.controlsfx.controls;
+
+    opens fpengine.demofpengine to javafx.fxml;
+    exports fpengine.demofpengine;
+}
