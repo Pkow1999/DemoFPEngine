@@ -24,7 +24,7 @@ public class Controller{
     @FXML
     final static int height = 600;
 
-    Engine engine;
+    EngineNew engine;
 
     long start;
     long finish;
@@ -38,7 +38,7 @@ public class Controller{
 
         canvas.setFocusTraversable(true);
         gc = canvas.getGraphicsContext2D();
-        engine = new Engine(gc);
+        engine = new EngineNew(gc);
 
         Platform.runLater(Controller.this::runWithoutThread);
 
@@ -115,7 +115,7 @@ public class Controller{
 
         start = System.currentTimeMillis();
         KeyFrame kf = new KeyFrame(
-                Duration.seconds(0.040),
+                Duration.millis(40),//ok. 25-30 klatek na sekunde
                 event -> {
                     finish = System.currentTimeMillis();
                     elapsedTime = finish - start;
@@ -123,13 +123,15 @@ public class Controller{
                     elapsedTime /= 1000;
                     KeyPressed(canvas);
                     KeyReleased(canvas);
+                    System.out.println("FPS: " + 1.0/elapsedTime);
+                    System.out.println("ElapsedTime: " + elapsedTime);
+                    System.out.println("");
                     Stage stage = (Stage) canvas.getScene().getWindow();
                     stage.setTitle("FPS: " + 1.0/elapsedTime);
                     update(gc);
-                    engine.move(1.0/elapsedTime/30);
+                    engine.move(1.0/elapsedTime);
                     engine.draw();
                 });
-
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
     }

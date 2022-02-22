@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+
+///OBSOLETE!!!!
 public class Engine {
     double playerX = 1.0;
     double playerY = 1.0;
     double playerAngle;
 
-    double FOV = 1.0/2.0;// Math.PI/4.0
+    double FOV = 1.151917;// Math.PI/4.0
 
     float Depth = 16.0f;//maksymalny draw distance
     Map plansza;
@@ -36,7 +38,7 @@ public class Engine {
         }
         gc = context;
         Height = gc.getCanvas().getHeight();
-        Width = gc.getCanvas().getHeight();
+        Width = gc.getCanvas().getWidth();
         gc.setTextAlign(TextAlignment.LEFT);
         gc.setFont(Font.font("Consolas",7));
     }
@@ -61,7 +63,6 @@ public class Engine {
                 //konwersja na inty bo chodzimy po indeksach
                 int nTestX = (int) (playerX + EyeX*DistanceToWall);
                 int nTestY = (int) (playerY + EyeY*DistanceToWall);
-
                 if(nTestX < 0 || nTestX > plansza.getWidth() || nTestY < 0 || nTestY > plansza.getHeight())//poza obszarem
                 {
                     hitWall = true;
@@ -103,6 +104,7 @@ public class Engine {
             int floor = (int) (Height - ceiling);//jak jest duzy sufit to i podloga musi byc duza
 
 
+            System.out.println(DistanceToWall);
 
             for(int j = 0; j < Height;j+= sizeOfBlock)//wysokosc
             {

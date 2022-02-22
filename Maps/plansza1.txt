@@ -6,7 +6,7 @@ X . . . . . . X X X . . . . . . . . X . . . . . X . . X . X . . X . . X X |
 X . . . . . . . d . . . . . . . . . X . . . . . . X d X . . X d X . . X X |
 X . . . . . . X X . . . . . . . X X X . . . . . . X . X . X . . X X X X X |
 X . . . . . . . X . . . . . . . . . d . . . . . . X O X . . . . . . . . X |
-X X X X X X X X X X X X X d X X X X X X X X X X X X X X . . X . . . v X X |
+X X X X X X X X X X X X X d X X X X X X X X X X X X X X . . X . . . . X X |
 X . . . X O . . . . . . . . . . . . X . . . . . . . . X X X X X d X X X X |
 X . . . X X X X X X . . . . . . . v X . . . . X . . . X O O X . . . . S X |
 X . . . X . . . . . . . . . . . . X X . . . . X . . . . . . d . . . . . X |
