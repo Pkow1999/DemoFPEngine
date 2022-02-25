@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -20,9 +21,9 @@ public class Controller{
     private GraphicsContext gc;
 
     @FXML
-    final static int width = 800;
+    final static int width = 1280;
     @FXML
-    final static int height = 600;
+    final static int height = 720;
 
     EngineNew engine;
 
@@ -35,6 +36,9 @@ public class Controller{
     {
         vbox.setPrefWidth(Controller.width);
         vbox.setPrefHeight(Controller.height);
+        canvas.setHeight(Controller.height);
+        canvas.setWidth(Controller.width);
+
 
         canvas.setFocusTraversable(true);
         gc = canvas.getGraphicsContext2D();
@@ -76,6 +80,10 @@ public class Controller{
             {
                 engine.STRAFERIGHT(true);
             }
+            else if(key.getCode().equals(KeyCode.SPACE))
+            {
+                engine.ACTION(true);
+            }
         });
     }
     public void KeyReleased(Canvas canvas)
@@ -105,6 +113,10 @@ public class Controller{
             {
                 engine.STRAFERIGHT(false);
             }
+            else if(key.getCode().equals(KeyCode.SPACE))
+            {
+                engine.ACTION(false);
+            }
         });
     }
     public void runWithoutThread()
@@ -113,24 +125,21 @@ public class Controller{
         Timeline gameLoop = new Timeline();
         gameLoop.setCycleCount( Timeline.INDEFINITE );
 
-        start = System.currentTimeMillis();
+        start = System.nanoTime();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(40),//ok. 25-30 klatek na sekunde
+                Duration.millis(17),//ok. 25-30 klatek na sekunde
                 event -> {
-                    finish = System.currentTimeMillis();
+                    finish = System.nanoTime();
                     elapsedTime = finish - start;
                     start = finish;
-                    elapsedTime /= 1000;
+                    elapsedTime /= 1000000000.0;
                     KeyPressed(canvas);
                     KeyReleased(canvas);
-                    System.out.println("FPS: " + 1.0/elapsedTime);
-                    System.out.println("ElapsedTime: " + elapsedTime);
-                    System.out.println("");
                     Stage stage = (Stage) canvas.getScene().getWindow();
                     stage.setTitle("FPS: " + 1.0/elapsedTime);
                     update(gc);
-                    engine.move(1.0/elapsedTime);
-                    engine.draw();
+                    engine.move(elapsedTime);
+                    engine.draw(elapsedTime);
                 });
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
