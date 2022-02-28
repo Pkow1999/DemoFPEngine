@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -21,9 +20,9 @@ public class Controller{
     private GraphicsContext gc;
 
     @FXML
-    final static int width = 1280;
+    final static int width = 800;
     @FXML
-    final static int height = 720;
+    final static int height = 600;
 
     EngineNew engine;
 
@@ -34,8 +33,8 @@ public class Controller{
     @FXML
     private void initialize()
     {
-        vbox.setPrefWidth(Controller.width);
-        vbox.setPrefHeight(Controller.height);
+        vbox.setPrefWidth(Controller.width + 20);
+        vbox.setPrefHeight(Controller.height + 20);
         canvas.setHeight(Controller.height);
         canvas.setWidth(Controller.width);
 
@@ -127,7 +126,7 @@ public class Controller{
 
         start = System.nanoTime();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(17),//ok. 25-30 klatek na sekunde
+                Duration.millis(40),//ok. 25-30 klatek na sekunde
                 event -> {
                     finish = System.nanoTime();
                     elapsedTime = finish - start;

@@ -1,46 +1,45 @@
 package fpengine.demofpengine;
 
-import javafx.scene.image.Image;
 
 import java.util.ArrayList;
 
-public class AnimatedImage {
-    public ArrayList<Image> Frames;
+public class AnimatedSprite {
+    public ArrayList<Sprite> Frames;
     double duration;
-    AnimatedImage()
+    AnimatedSprite()
     {
         Frames = new ArrayList<>();
     }
 
-    AnimatedImage(ArrayList<Image> framesImg)
+    AnimatedSprite(ArrayList<Sprite> framesImg)
     {
         this.Frames = new ArrayList<>(framesImg);
     }
 
-    AnimatedImage(ArrayList<Image> framesImg, double duration)
+    AnimatedSprite(ArrayList<Sprite> framesImg, double duration)
     {
         this.Frames = new ArrayList<>(framesImg);
         this.duration = duration;
     }
 
-    AnimatedImage(AnimatedImage animImg)
+    AnimatedSprite(AnimatedSprite animImg)
     {
         this.Frames = new ArrayList<>(animImg.Frames);
         this.duration = animImg.duration;
     }
 
-    AnimatedImage(double duration)
+    AnimatedSprite(double duration)
     {
         Frames = new ArrayList<>();
         this.duration = duration;
     }
-    AnimatedImage(Image img, double duration)
+    AnimatedSprite(Sprite img, double seconds)
     {
         Frames = new ArrayList<>();
         Frames.add(img);
-        this.duration = duration;
+        this.duration = seconds;
     }
-    void add(Image img)
+    void add(Sprite img)
     {
         Frames.add(img);
     }
