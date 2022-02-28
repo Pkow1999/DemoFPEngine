@@ -7,9 +7,9 @@ import java.util.Random;
 import java.util.Stack;
 
 public class Map {
-    int Height;
-    int Width;
-    char[][] map;
+    private int Height;
+    private int Width;
+    private char[][] map;
     public Map(int w, int h)
     {
             Height = h;
@@ -60,6 +60,11 @@ public class Map {
                 map[i][j] = '#';
                 j++;
             }
+            if((char)ch == 'H')
+            {
+                map[i][j] = 'H';
+                j++;
+            }
             if((char)ch == '.'  || (char)ch == 'O' || (char)ch == 'v' || (char)ch == 'S' || (char)ch == 'c' || (char)ch == '^')
             {
                 map[i][j] = '.';
@@ -90,6 +95,10 @@ public class Map {
     {
         return Width;
     }
+    public char getMap(int X, int Y) {
+        return map[Y][X];
+    }
+    public void setMap(int X, int Y, char value){ map[Y][X] = value; }
     public void print()
     {
         for(int i = 0; i < Height;i++)
@@ -236,7 +245,7 @@ public class Map {
                         }
                     }
                 }
-                else if(chance == 3)//dol
+                else//dol
                 {
                     if(y + 1 < Height)
                     {

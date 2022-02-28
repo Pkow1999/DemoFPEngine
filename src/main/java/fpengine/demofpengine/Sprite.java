@@ -1,36 +1,46 @@
 package fpengine.demofpengine;
 
-import javafx.scene.canvas.GraphicsContext;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
 public class Sprite {
-    int width;
-    int height;
-    double normWidth = 1.0;
-    double normHeight = 1.0;
-    WritableImage sprite;
-    Color transparent = Color.rgb(152,0,136);
-    public Sprite(String url)
-    {
+    private int Width;
+    private int Height;
+    private double positionX;
+    private double positionY;
+    private WritableImage sprite;
+    private final Color transparent = Color.rgb(152,0,136);
+    public Sprite(String url) {
         Image img = new Image(url);
         processImg(img);
     }
 
-    Sprite(String url, int w,int h)
-    {
-        Image img = new Image(url,w,h,true,true);
+    Sprite(String url, int width,int height) {
+        Image img = new Image(url,width,height,true,true);
+        processImg(img);
+    }
+    Sprite(String url, double positionX, double positionY) {
+        Image img = new Image(url);
+        this.positionX = positionX;
+        this.positionY = positionY;
+        processImg(img);
+    }
+    Sprite(String url,int width, int height, double positionX, double positionY) {
+        Image img = new Image(url,width,height,true,true);
+        this.positionX = positionX;
+        this.positionY = positionY;
         processImg(img);
     }
 
-    void processImg(Image img)
-    {
-        width = (int) img.getWidth();
-        height = (int) img.getHeight();
-        sprite = new WritableImage(width, height);
-        for(int i = 0; i < width; i++)
-            for(int j = 0;j < height;j++)
+//usuwa wszystkie fioletowe piksele
+    void processImg(Image img) {
+        Width = (int) img.getWidth();
+        Height = (int) img.getHeight();
+        sprite = new WritableImage(Width, Height);
+        for(int i = 0; i < Width; i++)
+            for(int j = 0; j < Height; j++)
             {
                 if(img.getPixelReader().getColor(i,j).equals(transparent)) {
                     sprite.getPixelWriter().setColor(i,j,Color.TRANSPARENT);
@@ -40,25 +50,29 @@ public class Sprite {
                 }
             }
     }
-    public Color getColor(int positionX, int positionY) {
-//        int posX = positionX % width;
-//        int posY = positionY % height;
-        return sprite.getPixelReader().getColor(positionX,positionY);
+
+
+    public Color getColor(int pixelX, int pixelY) {
+        return sprite.getPixelReader().getColor(pixelX,pixelY);
     }
-    public Color getSampleColor(double sampleX, double sampleY)
-    {
-        if(sampleX < 0 || sampleY < 0 || sampleX > width || sampleY > height)
+    public Color getSampleColor(double sampleX, double sampleY) {
+        if(sampleX < 0 || sampleY < 0 || sampleX > Width || sampleY > Height)
             return Color.BLACK;
-        double posX = sampleX * width;
-        double posY = sampleY * height;
+        double posX = sampleX * Width;
+        double posY = sampleY * Height;
         return sprite.getPixelReader().getColor((int)posX,(int) posY);
     }
-//    public Rectangle2D getBoundary()
-//    {
-//        return new Rectangle2D(positionX,positionY,width,height);
-//    }
-//    public boolean intersects(Sprite s)
-//    {
-//        return s.getBoundary().intersects( this.getBoundary() );
-//    }
+    public WritableImage getSprite(){return sprite;}
+    public int getWidth() {return Width;}
+    public int getHeight(){return Height;}
+    public double getPositionX(){return positionX;}
+    public double getPositionY(){return positionY;}
+    public void setPositionX(double pX){positionX = pX;}
+    public  void setPositionY(double pY){positionY = pY;}
+    public Rectangle2D getBoundary() {
+        return new Rectangle2D(positionX,positionY, Width, Height);
+    }
+    public boolean intersects(Sprite s) {
+        return s.getBoundary().intersects( this.getBoundary() );
+    }
 }

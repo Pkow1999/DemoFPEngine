@@ -9,7 +9,6 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -19,7 +18,7 @@ public class EngineNew {
     double playerY = 2.0;
     double playerAngle;
 
-    double FOV = -Math.PI/4.0;// 45 stopni
+    double FOV = -3.14159/4.0;// 45 stopni
 
     //double FOV = -11.0 * Math.PI / 30.0;//66 stopni
 
@@ -36,9 +35,6 @@ public class EngineNew {
     double Height;
     double Width;
     GraphicsContext gc;
-
-    long buffer[][];
-    ArrayList<ArrayList<Integer>> textures;
 
     int pointerWeapon = 0;
 
@@ -59,13 +55,16 @@ public class EngineNew {
         weapon = new AnimatedSprite(0.110);
         for(int i = 0; i < 5;i++)
         {
-            weapon.add(new Sprite("C:\\Users\\pkow1\\Desktop\\handshotgun\\handshotgun" + i + ".gif",300,300));
+            weapon.add(
+                    new Sprite("C:\\Users\\pkow1\\Desktop\\handshotgun\\handshotgun" + i + ".gif",300,300,
+                    (Width - 300)/2,
+                    Height - 300
+                    )
+            );
         }
         wall = new Sprite("C:\\Users\\pkow1\\Desktop\\mapka\\Stone.gif");
         door = new Sprite("C:\\Users\\pkow1\\Desktop\\mapka\\door.gif");
         bWall = new Sprite("C:\\Users\\pkow1\\Desktop\\mapka\\Blue_wall.gif");
-        buffer = new long[(int)Height][(int)Width];
-
 
     }
     void draw(double elapsedTime)
@@ -119,7 +118,7 @@ public class EngineNew {
             }
 
             //liczymy nasza odleglosc dopoki nie trafimy na sciane/drzwi albo nasz nasz draw distance sie skonczy
-            while (!hitWall && !hitDoor && DistanceToWall < Depth) {
+            while (!hitWall && !hitDoor && !hitBlueWall && DistanceToWall < Depth) {
                 //bierzemy najmniejszy promien
                 if (rayLenght1Dx < rayLenght1Dy) {
                     mapCheckerX += stepx;//i nasz promien idzie w osi X
@@ -132,15 +131,15 @@ public class EngineNew {
                 }
                 //jak znajdujemy sie na mapie (a nie gdzies poza nia)
                 if (mapCheckerX >= 0 && mapCheckerX < plansza.getWidth() && mapCheckerY >= 0 && mapCheckerY < plansza.getHeight()) {
-                    if (plansza.map[mapCheckerY][mapCheckerX] == '#')//to sprawdzamy czy trafilismy w sciane
+                    if (plansza.getMap(mapCheckerX, mapCheckerY) == '#')//to sprawdzamy czy trafilismy w sciane
                     {
                         hitWall = true;
 
                     }
-                    if (plansza.map[mapCheckerY][mapCheckerX] == 'd') {//czy w drzwi
+                    if (plansza.getMap(mapCheckerX, mapCheckerY) == 'd') {//czy w drzwi
                         hitDoor = true;
                     }
-                    if (plansza.map[mapCheckerY][mapCheckerX] == 'X') {//czy w drzwi
+                    if (plansza.getMap(mapCheckerX, mapCheckerY) == 'H') {
                         hitBlueWall = true;
                     }
                 }
@@ -201,7 +200,7 @@ public class EngineNew {
         }
         gc.setFill(Color.RED);
         gc.fillText(plansza.export(),0,5);
-        gc.drawImage(weapon.Frames.get(pointerWeapon).sprite,(Width - weapon.Frames.get(pointerWeapon).sprite.getWidth())/2,Height - weapon.Frames.get(pointerWeapon).sprite.getHeight());//bronkie rysujemy co klatke
+        gc.drawImage(weapon.getFrame(pointerWeapon).getSprite(),weapon.getFrame(pointerWeapon).getPositionX(),weapon.getFrame(pointerWeapon).getPositionY());//bronkie rysujemy co klatke
     }
     public void move(double fps)
     {
@@ -228,7 +227,7 @@ public class EngineNew {
             playerY += Math.cos(playerAngle) * 4 * fps;
 
 
-            if(plansza.map[(int) playerY][(int) playerX] == '#')
+            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX -= Math.sin(playerAngle) * 4 * fps;
                 playerY -= Math.cos(playerAngle) * 4 * fps;
@@ -239,7 +238,7 @@ public class EngineNew {
             playerX -= Math.sin(playerAngle) * 4 * fps;
             playerY -= Math.cos(playerAngle) * 4 * fps;
 
-            if(plansza.map[(int) playerY][(int) playerX] == '#')
+            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX += Math.sin(playerAngle) * 4 * fps;
                 playerY += Math.cos(playerAngle) * 4 * fps;
@@ -251,7 +250,7 @@ public class EngineNew {
             playerY -= Math.sin(playerAngle) * 4 * fps;
 
 
-            if(plansza.map[(int) playerY][(int) playerX] == '#')
+            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX -= Math.cos(playerAngle) * 4 * fps;
                 playerY += Math.sin(playerAngle) * 4 * fps;
@@ -264,16 +263,16 @@ public class EngineNew {
             playerY += Math.sin(playerAngle) * 4 * fps;
 
 
-            if(plansza.map[(int) playerY][(int) playerX] == '#')
+            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX += Math.cos(playerAngle) * 4 * fps;
                 playerY -= Math.sin(playerAngle) * 4 * fps;
             }
         }
-        if(plansza.map[(int) playerY][(int) playerX] == 'd')
+        if(plansza.getMap((int) playerX,(int) playerY) == 'd')
             openDoor((int) playerX, (int) playerY);
-        plansza.map[oldPlayerY][oldPLayerX] = '.';
-        plansza.map[(int) playerY][(int) playerX] = 'P';
+        plansza.setMap(oldPLayerX, oldPlayerY, '.');
+        plansza.setMap((int) playerX, (int) playerY, 'P');
         oldAction = action;//zapisujemy poprzednia wartosc w celu identyfikacji czy nie robimy akcji kilka razy pod rzad
     }
     void openDoor(int X, int Y)
@@ -283,9 +282,9 @@ public class EngineNew {
         AtomicInteger i = new AtomicInteger();
         KeyFrame kf = new KeyFrame(Duration.seconds(1),
                 event -> {
-            plansza.map[Y][X] = '.';
+            plansza.setMap(X, Y, '.');
             if(i.incrementAndGet() > 3)
-                plansza.map[Y][X] = 'd';
+                plansza.setMap(X, Y, 'd');
                 });
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
@@ -294,7 +293,7 @@ public class EngineNew {
     void shoot(double elapsedTime) {//ALE mozemy zmmienic indeks broni ktory rysujemy co te klatke
         Timeline gameLoop = new Timeline();
         gameLoop.setCycleCount( weapon.getLength() );
-        KeyFrame kf = new KeyFrame(Duration.seconds(weapon.duration),
+        KeyFrame kf = new KeyFrame(Duration.seconds(weapon.getDuration()),
                 event -> {
                     pointerWeapon++;
                     if(pointerWeapon >= weapon.getLength())
