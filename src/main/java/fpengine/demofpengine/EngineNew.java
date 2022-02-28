@@ -56,15 +56,15 @@ public class EngineNew {
         for(int i = 0; i < 5;i++)
         {
             weapon.add(
-                    new Sprite("C:\\Users\\pkow1\\Desktop\\handshotgun\\handshotgun" + i + ".gif",300,300,
+                    new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\handshotgun" + i + ".gif",300,300,
                     (Width - 300)/2,
                     Height - 300
                     )
             );
         }
-        wall = new Sprite("C:\\Users\\pkow1\\Desktop\\mapka\\Stone.gif");
-        door = new Sprite("C:\\Users\\pkow1\\Desktop\\mapka\\door.gif");
-        bWall = new Sprite("C:\\Users\\pkow1\\Desktop\\mapka\\Blue_wall.gif");
+        wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Stone.gif");
+        door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.gif");
+        bWall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Blue_wall.gif");
 
     }
     void draw(double elapsedTime)
