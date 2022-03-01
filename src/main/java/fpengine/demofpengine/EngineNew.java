@@ -9,6 +9,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -31,9 +32,10 @@ public class EngineNew {
     Sprite wall;
     Sprite door;
     Sprite bWall;
-    int sizeOfBlock = 4;
-    double Height;
-    double Width;
+    ArrayList<Color> floorColor;
+    int sizeOfBlock = 2;
+    final double Height;
+    final double Width;
     GraphicsContext gc;
 
     int pointerWeapon = 0;
@@ -62,6 +64,11 @@ public class EngineNew {
                     )
             );
         }
+        floorColor = new ArrayList<>();
+        floorColor.add(Color.DARKGREEN);
+        floorColor.add(floorColor.get(0).darker());
+        floorColor.add(floorColor.get(1).darker());
+
         wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Stone.gif");
         door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.gif");
         bWall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Blue_wall.gif");
@@ -160,15 +167,15 @@ public class EngineNew {
                     sampleX = testPointY - mapCheckerY;
             }
 
-            int ceiling = (int) (Height / 2.0 - Height / DistanceToWall);//im dalej sciana tym wiekszy sufit
+            int ceiling = (int) ( (Height / 2.0) - (Height / DistanceToWall) );//im dalej sciana tym wiekszy sufit
             int floor = (int) (Height - ceiling);//jak jest duzy sufit to i podloga musi byc duza - basicaly odbicie lustrzane
 
             for (int y = 0; y < Height; y += sizeOfBlock)//idziemy po wysokosci
-            {
-                if (y <= ceiling) {
-                    gc.setFill(Color.BLACK);//sufit malujemy na czarno
-                } else if (y < floor) {
+            {//sufitem sie nie zajmujemy bo robi to za nas funkcja clear
+                if (y > ceiling && y <= floor)
+                {
                     double sampleY = ((double)y - (double)ceiling) / ((double)floor - (double)ceiling);
+
                     Color kolor = wall.getSampleColor(sampleX,sampleY);
                     if(hitBlueWall)
                         kolor = bWall.getSampleColor(sampleX,sampleY);
@@ -179,17 +186,22 @@ public class EngineNew {
                     if(DistanceToWall > Depth - 0.125)
                         kolor = Color.BLACK;
 
+                    if(DistanceToWall > Depth * 0.8)
+                        kolor = kolor.darker();
+
                     gc.setFill(kolor);
                     gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
-                } else {
+                }
+                else if(y > floor) // podloga
+                {
                     double floorDepth = 1.0 - (((double) y - Height / 2.0) / (Height / 2.0));
 
                     if (floorDepth < 0.25) {
-                        gc.setFill(Color.DARKGREEN);
+                        gc.setFill(floorColor.get(0));
                     } else if (floorDepth < 0.5) {
-                        gc.setFill(Color.DARKGREEN.darker());
+                        gc.setFill(floorColor.get(1));
                     } else if (floorDepth < 0.75) {
-                        gc.setFill(Color.DARKGREEN.darker().darker());
+                        gc.setFill(floorColor.get(2));
                     } else if (floorDepth < 0.875)//idealne
                     {
                         gc.setFill(Color.BLACK);

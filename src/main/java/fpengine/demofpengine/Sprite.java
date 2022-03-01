@@ -56,10 +56,10 @@ public class Sprite {
         return sprite.getPixelReader().getColor(pixelX,pixelY);
     }
     public Color getSampleColor(double sampleX, double sampleY) {
-        if(sampleX < 0 || sampleY < 0 || sampleX > Width || sampleY > Height)
-            return Color.BLACK;
         double posX = sampleX * Width;
-        double posY = sampleY * Height;
+        double posY = sampleY * Height - 1;
+        if(posX < 0 || posY < 0 || posX > Width || posY > Height)
+            return Color.BLACK;
         return sprite.getPixelReader().getColor((int)posX,(int) posY);
     }
     public WritableImage getSprite(){return sprite;}

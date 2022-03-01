@@ -47,7 +47,7 @@ public class Controller{
 
     }
 
-    private void update(GraphicsContext gc)
+    private void clear(GraphicsContext gc)
     {
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -126,7 +126,7 @@ public class Controller{
 
         start = System.nanoTime();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(40),//ok. 25-30 klatek na sekunde
+                Duration.millis(17),//ok. 25-30 klatek na sekunde
                 event -> {
                     finish = System.nanoTime();
                     elapsedTime = finish - start;
@@ -136,7 +136,7 @@ public class Controller{
                     KeyReleased(canvas);
                     Stage stage = (Stage) canvas.getScene().getWindow();
                     stage.setTitle("FPS: " + 1.0/elapsedTime);
-                    update(gc);
+                    clear(gc);
                     engine.move(elapsedTime);
                     engine.draw(elapsedTime);
                 });
