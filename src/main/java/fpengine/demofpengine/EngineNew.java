@@ -2,21 +2,23 @@ package fpengine.demofpengine;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
 //Oparte o: https://lodev.org/cgtutor/raycasting.html
-public class EngineNew {
+//oraz to: https://github.com/OneLoneCoder/videos/blob/master/OneLoneCoder_ComandLineFPS_2.cpp
+public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz fillrect ale nie obsluguje transparentnosci i malowania po blokach
     double playerX = 2.0;
     double playerY = 2.0;
     double playerAngle;
@@ -29,7 +31,7 @@ public class EngineNew {
     Map plansza;
 
     private boolean left,right,forward,backward,strafeLeft,strafeRight,action,oldAction;
-
+    private boolean synchrAction;
 
 
     AnimatedSprite weapon;
@@ -39,7 +41,7 @@ public class EngineNew {
     ArrayList<Color> floorColor;
     ArrayList<Sprite> listOfObjects;
 
-    int sizeOfBlock = 2;
+    int sizeOfBlock = 4;
     final double Height;
     final double Width;
 
@@ -47,10 +49,13 @@ public class EngineNew {
     double Buffer[];
 
     int pointerWeapon = 0;
-
+    Media weaponSound;
+    Media doorSound;
+    MediaPlayer mediaPlayer;
     EngineNew(GraphicsContext context)
     {
         oldAction = false;
+        synchrAction = false;
         try {
             plansza = new Map("Maps\\plansza1.txt");
         } catch (IOException e) {
@@ -62,7 +67,7 @@ public class EngineNew {
         gc.setTextAlign(TextAlignment.LEFT);
         gc.setFont(Font.font("Consolas",7));
 
-        weapon = new AnimatedSprite(0.110);
+        weapon = new AnimatedSprite(0.150);
         for(int i = 0; i < 5;i++)
         {
             weapon.add(
@@ -74,13 +79,15 @@ public class EngineNew {
                     )
             );
         }
+        weaponSound = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\Shotgun.mp3").toURI().toString());
+        doorSound = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\Door.wav").toURI().toString());
         floorColor = new ArrayList<>();
         floorColor.add(Color.DARKGREEN);
         floorColor.add(floorColor.get(0).darker());
         floorColor.add(floorColor.get(1).darker());
 
-        wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Stone.gif",null);
-        door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.gif",null);
+        wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\wall.png",null);
+        door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.png",null);
         bWall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Blue_wall.gif",null);
 
         listOfObjects = new ArrayList<>();
@@ -207,7 +214,8 @@ public class EngineNew {
                         kolor = kolor.darker();
 
                     gc.setFill(kolor);
-                    gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
+                   gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
+                      //  gc.getPixelWriter().setColor(x,y,kolor);
                 }
                 else if(y > floor) // podloga
                 {
@@ -215,15 +223,20 @@ public class EngineNew {
 
                     if (floorDepth < 0.25) {
                         gc.setFill(floorColor.get(0));
+                        //gc.getPixelWriter().setColor(x,y,floorColor.get(0));
                     } else if (floorDepth < 0.5) {
                         gc.setFill(floorColor.get(1));
+                        //gc.getPixelWriter().setColor(x,y,floorColor.get(1));
                     } else if (floorDepth < 0.75) {
                         gc.setFill(floorColor.get(2));
+                        //gc.getPixelWriter().setColor(x,y,floorColor.get(2));
                     } else if (floorDepth < 0.875)//idealne
                     {
                         gc.setFill(Color.BLACK);
+                        //gc.getPixelWriter().setColor(x,y,Color.BLACK);
                     }
                     gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
+
                 }
             }
         }
@@ -248,8 +261,10 @@ public class EngineNew {
                 objectAngle -= 2.0 * Math.PI;
 
             boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
-            if(inPlayerFov && DistanceFromPlayer >= 0.5 && DistanceFromPlayer < Depth)
+            if(inPlayerFov && DistanceFromPlayer >= 1 && DistanceFromPlayer < Depth)
             {
+                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action)
+                    sprite.setRemoveTag(true);
                 double objectCeiling = (Height / 2.0) - (Height / DistanceFromPlayer);
                 double objectFloor = Height - objectCeiling;
                 double objectHeight = objectFloor - objectCeiling;
@@ -266,14 +281,17 @@ public class EngineNew {
                         {
                             if(Buffer[objectColumn] >= DistanceFromPlayer)
                             {
-
                                 gc.setFill(sprite.getSampleColor(sampleX,sampleY));
-                                gc.fillRect(objectColumn,objectCeiling + ly,sizeOfBlock,sizeOfBlock);
+                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
+                                Buffer[objectColumn] = DistanceFromPlayer;
+                               // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
+
                             }
                         }
                     }
             }
         }
+        listOfObjects.removeIf(Sprite::getRemoveTag);
     }
     public void drawStatic()
     {
@@ -287,10 +305,11 @@ public class EngineNew {
         int oldPlayerY = (int) playerY;
 
         if(!oldAction)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz
-            if(action)
-            {
-                shoot(fps);
-            }
+            if(!synchrAction)//nie jest wykonywana animacja
+                if(action)
+                {
+                    shoot(fps);
+                }
 
         if(right)
         {
@@ -357,29 +376,35 @@ public class EngineNew {
     void openDoor(int X, int Y)
     {
         Timeline gameLoop = new Timeline();
-        gameLoop.setCycleCount( 4 );
+        gameLoop.setCycleCount( 3 );
         AtomicInteger i = new AtomicInteger();
         KeyFrame kf = new KeyFrame(Duration.seconds(1),
                 event -> {
             plansza.setMap(X, Y, '.');
-            if(i.incrementAndGet() > 3)
+            if(i.incrementAndGet() > 2)
                 plansza.setMap(X, Y, 'd');
                 });
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
-
+        mediaPlayer = new MediaPlayer(doorSound);
+        mediaPlayer.play();
     }
     void shoot(double elapsedTime) {//ALE mozemy zmmienic indeks broni ktory rysujemy co te klatke
+        synchrAction = true;//mamy wlaczona animacje nie mozna jej zatrzymac
         Timeline gameLoop = new Timeline();
         gameLoop.setCycleCount( weapon.getLength() );
         KeyFrame kf = new KeyFrame(Duration.seconds(weapon.getDuration()),
                 event -> {
                     pointerWeapon++;
-                    if(pointerWeapon >= weapon.getLength())
+                    if(pointerWeapon >= weapon.getLength()) {
                         pointerWeapon = 0;
+                        synchrAction = false;//animacja sie skonczyla mozna dodac nowa
+                    }
                 });
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
+        mediaPlayer = new MediaPlayer(weaponSound);
+        mediaPlayer.play();
     }
     public void LEFT(boolean input)
     {

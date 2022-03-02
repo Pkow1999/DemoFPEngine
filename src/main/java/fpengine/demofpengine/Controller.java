@@ -2,14 +2,22 @@ package fpengine.demofpengine;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.io.File;
+import java.util.concurrent.Executor;
 
 public class Controller{
     @FXML
@@ -28,6 +36,7 @@ public class Controller{
     long start;
     long finish;
     double elapsedTime = 1.0;
+    MediaPlayer backgroundSound;
 
     @FXML
     private void initialize()
@@ -41,7 +50,12 @@ public class Controller{
         canvas.setFocusTraversable(true);
         gc = canvas.getGraphicsContext2D();
         engine = new EngineNew(gc);
-        runWithoutThread();
+        //runWithoutThread();
+
+        Media media = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\TheWildSide.mp3").toURI().toString());
+        backgroundSound = new MediaPlayer(media);
+        backgroundSound.setAutoPlay(true);
+        Platform.runLater(this::runWithoutThread);
     }
 
     private void clear(GraphicsContext gc)
