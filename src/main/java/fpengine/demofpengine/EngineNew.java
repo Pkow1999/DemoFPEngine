@@ -2,6 +2,8 @@ package fpengine.demofpengine;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -19,7 +21,7 @@ public class EngineNew {
     double playerY = 2.0;
     double playerAngle;
 
-    double FOV = -3.14159/4.0;// 45 stopni
+    double FOV = -Math.PI/4.0;// 45 stopni
 
     //double FOV = -11.0 * Math.PI / 30.0;//66 stopni
 
@@ -28,15 +30,21 @@ public class EngineNew {
 
     private boolean left,right,forward,backward,strafeLeft,strafeRight,action,oldAction;
 
+
+
     AnimatedSprite weapon;
     Sprite wall;
     Sprite door;
     Sprite bWall;
     ArrayList<Color> floorColor;
+    ArrayList<Sprite> listOfObjects;
+
     int sizeOfBlock = 2;
     final double Height;
     final double Width;
+
     GraphicsContext gc;
+    double Buffer[];
 
     int pointerWeapon = 0;
 
@@ -60,7 +68,9 @@ public class EngineNew {
             weapon.add(
                     new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\handshotgun" + i + ".gif",300,300,
                     (Width - 300)/2,
-                    Height - 300
+                    Height - 300,
+                            Color.rgb(152,0,136)
+
                     )
             );
         }
@@ -69,12 +79,17 @@ public class EngineNew {
         floorColor.add(floorColor.get(0).darker());
         floorColor.add(floorColor.get(1).darker());
 
-        wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Stone.gif");
-        door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.gif");
-        bWall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Blue_wall.gif");
+        wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Stone.gif",null);
+        door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.gif",null);
+        bWall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Blue_wall.gif",null);
 
+        listOfObjects = new ArrayList<>();
+        listOfObjects.add(new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\barrel.png",4.5,3.5 ,Color.BLACK));
+        listOfObjects.add(new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\barrel.png",14.5,7.5, Color.BLACK));
+        listOfObjects.add(new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\barrel.png",15.5,6.5, Color.BLACK));
+        Buffer = new double[(int) Width];
     }
-    void draw(double elapsedTime)
+    void drawMap()
     {
         for(int x = 0; x < Width; x+=sizeOfBlock) {
             double RayAngle = (playerAngle - FOV / 2.0) + (x / Width) * FOV;//kat naszego promienia wystrzeliwanego co cala szerokosc obrazu
@@ -87,7 +102,8 @@ public class EngineNew {
             boolean hitBlueWall = false;
 
             double EyeX = Math.sin(RayAngle);//wektor jednostkowy dla naszego promienia w przestrzeni playera
-            double EyeY = Math.cos(RayAngle);
+            double EyeY = Math.cos(RayAngle);//trzeba pamietac ze ten Y odnosi sie do naszej przestrzeni 2 wymiarowej w tablicy czyli gora/dol
+            //oba daja nam pelne wspolrzedne biegunowe
 
 
             //nasz krok przesuniecia po indeksach tabeli ala mapy/planszy
@@ -169,7 +185,8 @@ public class EngineNew {
 
             int ceiling = (int) ( (Height / 2.0) - (Height / DistanceToWall) );//im dalej sciana tym wiekszy sufit
             int floor = (int) (Height - ceiling);//jak jest duzy sufit to i podloga musi byc duza - basicaly odbicie lustrzane
-
+            for(int i = 0; i < sizeOfBlock; i++)
+                Buffer[x + i] = DistanceToWall;
             for (int y = 0; y < Height; y += sizeOfBlock)//idziemy po wysokosci
             {//sufitem sie nie zajmujemy bo robi to za nas funkcja clear
                 if (y > ceiling && y <= floor)
@@ -210,6 +227,56 @@ public class EngineNew {
                 }
             }
         }
+    }
+    public void drawObjects()
+    {
+        for(Sprite sprite : listOfObjects)
+        {
+            double vecX = sprite.getPositionX() - playerX;
+            double vecY = sprite.getPositionY() - playerY;
+            double DistanceFromPlayer = Math.sqrt(vecX * vecX + vecY * vecY);
+
+
+            double EyeX = Math.sin(playerAngle);
+            double EyeY = Math.cos(playerAngle);
+            double objectAngle = Math.atan2(EyeY, EyeX) - Math.atan2(vecY,vecX);
+
+
+            if(objectAngle < -Math.PI)
+                objectAngle += 2.0 * Math.PI;
+            if(objectAngle > Math.PI)
+                objectAngle -= 2.0 * Math.PI;
+
+            boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
+            if(inPlayerFov && DistanceFromPlayer >= 0.5 && DistanceFromPlayer < Depth)
+            {
+                double objectCeiling = (Height / 2.0) - (Height / DistanceFromPlayer);
+                double objectFloor = Height - objectCeiling;
+                double objectHeight = objectFloor - objectCeiling;
+                double objectAspectRatio = (double) sprite.getHeight() / (double) sprite.getWidth();
+                double objectWidth = objectHeight / objectAspectRatio;
+                double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
+                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock)
+                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock)
+                    {
+                        double sampleX = lx / objectWidth;
+                        double sampleY = ly / objectHeight;
+                        int objectColumn = (int)( middleOfObject + lx - (objectWidth / 2.0) ) ;
+                        if(objectColumn >= 0 && objectColumn < Width)
+                        {
+                            if(Buffer[objectColumn] >= DistanceFromPlayer)
+                            {
+
+                                gc.setFill(sprite.getSampleColor(sampleX,sampleY));
+                                gc.fillRect(objectColumn,objectCeiling + ly,sizeOfBlock,sizeOfBlock);
+                            }
+                        }
+                    }
+            }
+        }
+    }
+    public void drawStatic()
+    {
         gc.setFill(Color.RED);
         gc.fillText(plansza.export(),0,5);
         gc.drawImage(weapon.getFrame(pointerWeapon).getSprite(),weapon.getFrame(pointerWeapon).getPositionX(),weapon.getFrame(pointerWeapon).getPositionY());//bronkie rysujemy co klatke

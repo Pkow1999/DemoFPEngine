@@ -2,7 +2,6 @@ package fpengine.demofpengine;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -42,9 +41,7 @@ public class Controller{
         canvas.setFocusTraversable(true);
         gc = canvas.getGraphicsContext2D();
         engine = new EngineNew(gc);
-
-        Platform.runLater(Controller.this::runWithoutThread);
-
+        runWithoutThread();
     }
 
     private void clear(GraphicsContext gc)
@@ -120,13 +117,11 @@ public class Controller{
     }
     public void runWithoutThread()
     {
-
         Timeline gameLoop = new Timeline();
         gameLoop.setCycleCount( Timeline.INDEFINITE );
-
         start = System.nanoTime();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(17),//ok. 25-30 klatek na sekunde
+                Duration.millis(40),//ok. 25-30 klatek na sekunde
                 event -> {
                     finish = System.nanoTime();
                     elapsedTime = finish - start;
@@ -138,7 +133,9 @@ public class Controller{
                     stage.setTitle("FPS: " + 1.0/elapsedTime);
                     clear(gc);
                     engine.move(elapsedTime);
-                    engine.draw(elapsedTime);
+                    engine.drawMap();
+                    engine.drawObjects();
+                    engine.drawStatic();
                 });
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();

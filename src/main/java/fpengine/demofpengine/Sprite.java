@@ -12,37 +12,37 @@ public class Sprite {
     private double positionY;
     private WritableImage sprite;
     private final Color transparent = Color.rgb(152,0,136);
-    public Sprite(String url) {
+    public Sprite(String url, Color color) {
         Image img = new Image(url);
-        processImg(img);
+        processImg(img, color);
     }
 
-    Sprite(String url, int width,int height) {
+    Sprite(String url, int width,int height, Color color) {
         Image img = new Image(url,width,height,true,true);
-        processImg(img);
+        processImg(img,color);
     }
-    Sprite(String url, double positionX, double positionY) {
+    Sprite(String url, double positionX, double positionY, Color color) {
         Image img = new Image(url);
         this.positionX = positionX;
         this.positionY = positionY;
-        processImg(img);
+        processImg(img,color);
     }
-    Sprite(String url,int width, int height, double positionX, double positionY) {
+    Sprite(String url,int width, int height, double positionX, double positionY, Color color) {
         Image img = new Image(url,width,height,true,true);
         this.positionX = positionX;
         this.positionY = positionY;
-        processImg(img);
+        processImg(img,color);
     }
 
 //usuwa wszystkie fioletowe piksele
-    void processImg(Image img) {
+    void processImg(Image img, Color color) {
         Width = (int) img.getWidth();
         Height = (int) img.getHeight();
         sprite = new WritableImage(Width, Height);
         for(int i = 0; i < Width; i++)
             for(int j = 0; j < Height; j++)
             {
-                if(img.getPixelReader().getColor(i,j).equals(transparent)) {
+                if(img.getPixelReader().getColor(i,j).equals(color)) {
                     sprite.getPixelWriter().setColor(i,j,Color.TRANSPARENT);
                 }
                 else{
@@ -56,11 +56,20 @@ public class Sprite {
         return sprite.getPixelReader().getColor(pixelX,pixelY);
     }
     public Color getSampleColor(double sampleX, double sampleY) {
-        double posX = sampleX * Width;
-        double posY = sampleY * Height - 1;
-        if(posX < 0 || posY < 0 || posX > Width || posY > Height)
+        try {//huh X MOZE sie rownac jeden i wtedy mamy problem
+            double posX = sampleX * Width;
+            double posY = sampleY * Height - 1;//modyfikujac ta wartosc moge ustawiac wysokosc scian
+            if(posX < 0 || posY < 0 || posX >= Width || posY >= Height)//CHYBA rozwiazane - wymaga wiecej testowania
+                return Color.BLACK;
+            return sprite.getPixelReader().getColor((int)posX,(int) posY);
+        }
+        catch (IndexOutOfBoundsException e)
+        {
+            System.out.println(e.toString());
+            System.out.println("X: " +  sampleX );
+            System.out.println("Y: " + sampleY);
             return Color.BLACK;
-        return sprite.getPixelReader().getColor((int)posX,(int) posY);
+        }
     }
     public WritableImage getSprite(){return sprite;}
     public int getWidth() {return Width;}
