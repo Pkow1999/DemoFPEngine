@@ -5,6 +5,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 
+import java.util.Comparator;
+
 public class Sprite {
     private int Width;
     private int Height;
@@ -75,7 +77,7 @@ public class Sprite {
     public Color getSampleColor(double sampleX, double sampleY) {
         try {//huh X MOZE sie rownac jeden i wtedy mamy problem
             double posX = sampleX * Width;
-            double posY = sampleY * Height - 1;//modyfikujac ta wartosc moge ustawiac wysokosc scian
+            double posY = sampleY * Height;//modyfikujac ta wartosc moge ustawiac wysokosc scian
             if(posX < 0 || posY < 0 || posX >= Width || posY >= Height)//CHYBA rozwiazane - wymaga wiecej testowania
                 return Color.BLACK;
             return sprite.getPixelReader().getColor((int)posX,(int) posY);
@@ -108,4 +110,5 @@ public class Sprite {
     public boolean intersects(Sprite s) {
         return s.getBoundary().intersects( this.getBoundary() );
     }
+
 }

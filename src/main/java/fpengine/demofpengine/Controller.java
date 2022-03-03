@@ -3,8 +3,6 @@ package fpengine.demofpengine;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -17,7 +15,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
-import java.util.concurrent.Executor;
 
 public class Controller{
     @FXML
@@ -54,6 +51,7 @@ public class Controller{
 
         Media media = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\TheWildSide.mp3").toURI().toString());
         backgroundSound = new MediaPlayer(media);
+        backgroundSound.setCycleCount(MediaPlayer.INDEFINITE);
         backgroundSound.setAutoPlay(true);
         Platform.runLater(this::runWithoutThread);
     }
@@ -94,6 +92,7 @@ public class Controller{
             {
                 engine.ACTION(true);
             }
+            engine.SLOT(key.getCode().getCode());
         });
     }
     public void KeyReleased(Canvas canvas)
@@ -135,7 +134,7 @@ public class Controller{
         gameLoop.setCycleCount( Timeline.INDEFINITE );
         start = System.nanoTime();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(40),//ok. 25-30 klatek na sekunde
+                Duration.millis(17),//ok. 25-30 klatek na sekunde
                 event -> {
                     finish = System.nanoTime();
                     elapsedTime = finish - start;
@@ -149,6 +148,7 @@ public class Controller{
                     engine.move(elapsedTime);
                     engine.drawMap();
                     engine.drawObjects();
+                    engine.drawEnemies();
                     engine.drawStatic();
                 });
         gameLoop.getKeyFrames().add( kf );

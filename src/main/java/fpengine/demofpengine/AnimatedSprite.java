@@ -1,11 +1,17 @@
 package fpengine.demofpengine;
 
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+
 import java.util.ArrayList;
 
 public class AnimatedSprite {
     private ArrayList<Sprite> Frames;
+    int pointer = 0;
     private double duration;
+    boolean synchSprite = false;
     AnimatedSprite()
     {
         Frames = new ArrayList<>();
@@ -49,4 +55,23 @@ public class AnimatedSprite {
         return Frames.get(frameIndex);
     }
     int getLength(){return Frames.size();}
+    void anim()
+    {
+        synchSprite = true;
+            Timeline gameLoop = new Timeline();
+            gameLoop.setCycleCount(Frames.size());
+            KeyFrame kf = new KeyFrame(Duration.seconds(duration),
+                    event -> {
+                if(pointer < Frames.size() - 1)
+                {
+                    pointer++;
+                }
+                else {
+                    synchSprite = false;
+                }
+                    });
+            gameLoop.getKeyFrames().add( kf );
+            gameLoop.play();
+    }
+
 }

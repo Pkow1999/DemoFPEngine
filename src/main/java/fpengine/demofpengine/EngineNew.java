@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 //Oparte o: https://lodev.org/cgtutor/raycasting.html
 //oraz to: https://github.com/OneLoneCoder/videos/blob/master/OneLoneCoder_ComandLineFPS_2.cpp
 public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz fillrect ale nie obsluguje transparentnosci i malowania po blokach
@@ -27,19 +26,17 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
     //double FOV = -11.0 * Math.PI / 30.0;//66 stopni
 
-    double Depth = 8.0;//maksymalny draw distance
+    double Depth = 16.0;//maksymalny draw distance
     Map plansza;
 
     private boolean left,right,forward,backward,strafeLeft,strafeRight,action,oldAction;
-    private boolean synchrAction;
 
-
-    AnimatedSprite weapon;
     Sprite wall;
     Sprite door;
     Sprite bWall;
     ArrayList<Color> floorColor;
     ArrayList<Sprite> listOfObjects;
+    ArrayList<AnimatedSprite> listOfEnemies;
 
     int sizeOfBlock = 4;
     final double Height;
@@ -47,53 +44,112 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
     GraphicsContext gc;
     double Buffer[];
-
-    int pointerWeapon = 0;
-    Media weaponSound;
     Media doorSound;
     MediaPlayer mediaPlayer;
+    Weapon weapon0;
+    Weapon weapon1;
+    ArrayList<Weapon> weaponArrayList;
+    int slot = 1;
     EngineNew(GraphicsContext context)
     {
         oldAction = false;
-        synchrAction = false;
         try {
             plansza = new Map("Maps\\plansza1.txt");
         } catch (IOException e) {
             e.printStackTrace();
         }
+       // plansza = new Map(16,16,true,(int)playerX,(int)playerY);
         gc = context;
         Height = gc.getCanvas().getHeight();
         Width = gc.getCanvas().getWidth();
         gc.setTextAlign(TextAlignment.LEFT);
         gc.setFont(Font.font("Consolas",7));
 
-        weapon = new AnimatedSprite(0.150);
-        for(int i = 0; i < 5;i++)
+        weapon0 = new Weapon();
+
+
+        AnimatedSprite pistol = new AnimatedSprite(0.100);
+
+        for(int i = 1; i < 6;i++)
         {
-            weapon.add(
-                    new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\handshotgun" + i + ".gif",300,300,
-                    (Width - 300)/2,
-                    Height - 300,
+            pistol.add(
+                    new Sprite(new File("sprites\\weapons\\pistol\\pistol" + i + ".bmp").toURI().toString(),300,300,
+                            (Controller.width - 300)/2,
+                            Controller.height - 300,
                             Color.rgb(152,0,136)
 
-                    )
+                    )//Machine Gun Sprites
+
+                    //by Z. Franz
             );
         }
-        weaponSound = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\Shotgun.mp3").toURI().toString());
+        weapon1 = new Weapon(pistol,"sounds\\Pistol.wav",30,120,8);
+
+        weaponArrayList = new ArrayList<>();
+        weaponArrayList.add(weapon0);
+        weaponArrayList.add(weapon1);
+
         doorSound = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\Door.wav").toURI().toString());
         floorColor = new ArrayList<>();
         floorColor.add(Color.DARKGREEN);
         floorColor.add(floorColor.get(0).darker());
         floorColor.add(floorColor.get(1).darker());
 
-        wall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\wall.png",null);
-        door = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\door.png",null);
-        bWall = new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\Blue_wall.gif",null);
+        wall = new Sprite(new File("sprites\\wall.png").toURI().toString(),null);
+        door = new Sprite(new File("sprites\\door.png").toURI().toString(),null);
+        bWall = new Sprite(new File("sprites\\Blue_wall.gif").toURI().toString(),null);
 
         listOfObjects = new ArrayList<>();
-        listOfObjects.add(new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\barrel.png",4.5,3.5 ,Color.BLACK));
-        listOfObjects.add(new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\barrel.png",14.5,7.5, Color.BLACK));
-        listOfObjects.add(new Sprite("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sprites\\barrel.png",15.5,6.5, Color.BLACK));
+        //listOfObjects.add(new Sprite(new File("sprites\\barrel.png").toURI().toString(),4.5,3.5 ,Color.BLACK));
+        listOfObjects.add(new Sprite(new File("sprites\\barrel.png").toURI().toString(),14.5,7.5, Color.BLACK));
+        listOfObjects.add(new Sprite(new File("sprites\\greenlight.png").toURI().toString(),3,6.5, Color.BLACK));
+
+        AnimatedSprite enemy = new AnimatedSprite(0.15);
+        enemy.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,6.5, Color.rgb(152,0,136)) ) ;
+
+        for(int i = 1; i < 5;i++)
+        {
+           enemy.add(
+                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),300,300,
+                            enemy.getFrame(0).getPositionX(),enemy.getFrame(0).getPositionY(),
+                            Color.rgb(152,0,136)
+
+                    )
+            );
+        }
+
+        AnimatedSprite enemy2 = new AnimatedSprite(0.15);
+        enemy2.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),4.5,3.5, Color.rgb(152,0,136)) ) ;
+
+        for(int i = 1; i < 5;i++)
+        {
+            enemy2.add(
+                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),300,300,
+                            enemy2.getFrame(0).getPositionX(),enemy2.getFrame(0).getPositionY(),
+                            Color.rgb(152,0,136)
+
+                    )
+            );
+        }
+
+        AnimatedSprite enemy1 = new AnimatedSprite(0.15);
+        enemy1.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,4, Color.rgb(152,0,136)) ) ;
+
+        for(int i = 1; i < 5;i++)
+        {
+            enemy1.add(
+                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),300,300,
+                            enemy1.getFrame(0).getPositionX(),enemy1.getFrame(0).getPositionY(),
+                            Color.rgb(152,0,136)
+
+                    )
+            );
+        }
+
+        listOfEnemies = new ArrayList<>();
+        listOfEnemies.add(enemy);
+        listOfEnemies.add(enemy1);
+        listOfEnemies.add(enemy2);
         Buffer = new double[(int) Width];
     }
     void drawMap()
@@ -210,9 +266,6 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     if(DistanceToWall > Depth - 0.125)
                         kolor = Color.BLACK;
 
-                    if(DistanceToWall > Depth * 0.8)
-                        kolor = kolor.darker();
-
                     gc.setFill(kolor);
                    gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
                       //  gc.getPixelWriter().setColor(x,y,kolor);
@@ -227,20 +280,24 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     } else if (floorDepth < 0.5) {
                         gc.setFill(floorColor.get(1));
                         //gc.getPixelWriter().setColor(x,y,floorColor.get(1));
-                    } else if (floorDepth < 0.75) {
+                    } else {
                         gc.setFill(floorColor.get(2));
                         //gc.getPixelWriter().setColor(x,y,floorColor.get(2));
-                    } else if (floorDepth < 0.875)//idealne
-                    {
-                        gc.setFill(Color.BLACK);
-                        //gc.getPixelWriter().setColor(x,y,Color.BLACK);
                     }
+
+//                    else if (floorDepth < 0.875)//idealne
+//                    {
+//                        gc.setFill(Color.BLACK);
+//                        //gc.getPixelWriter().setColor(x,y,Color.BLACK);
+//                    }
                     gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
 
                 }
             }
         }
     }
+
+    // TODO: 02.03.2022 dalej jest problem z przenikajacymi sprite'ami
     public void drawObjects()
     {
         for(Sprite sprite : listOfObjects)
@@ -261,13 +318,11 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 objectAngle -= 2.0 * Math.PI;
 
             boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
-            if(inPlayerFov && DistanceFromPlayer >= 1 && DistanceFromPlayer < Depth)
+            if(inPlayerFov && DistanceFromPlayer >= 0.9 && DistanceFromPlayer < Depth)
             {
-                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action)
-                    sprite.setRemoveTag(true);
-                double objectCeiling = (Height / 2.0) - (Height / DistanceFromPlayer);
-                double objectFloor = Height - objectCeiling;
-                double objectHeight = objectFloor - objectCeiling;
+                int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
+                int objectFloor = (int)Height - objectCeiling;
+                int objectHeight = objectFloor - objectCeiling;
                 double objectAspectRatio = (double) sprite.getHeight() / (double) sprite.getWidth();
                 double objectWidth = objectHeight / objectAspectRatio;
                 double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
@@ -286,6 +341,8 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                                 Buffer[objectColumn] = DistanceFromPlayer;
                                // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
 
+                                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action)
+                                    sprite.setRemoveTag(true);
                             }
                         }
                     }
@@ -293,22 +350,77 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         }
         listOfObjects.removeIf(Sprite::getRemoveTag);
     }
+
+    public void drawEnemies()
+    {
+        //sortEnemies();
+        for(AnimatedSprite sprite : listOfEnemies)
+        {
+            double vecX = sprite.getFrame(sprite.pointer).getPositionX() - playerX;
+            double vecY = sprite.getFrame(sprite.pointer).getPositionY() - playerY;
+            double DistanceFromPlayer = Math.sqrt(vecX * vecX + vecY * vecY);
+
+
+            double EyeX = Math.sin(playerAngle);
+            double EyeY = Math.cos(playerAngle);
+            double objectAngle = Math.atan2(EyeY, EyeX) - Math.atan2(vecY,vecX);
+
+
+            if(objectAngle < -Math.PI)
+                objectAngle += 2.0 * Math.PI;
+            if(objectAngle > Math.PI)
+                objectAngle -= 2.0 * Math.PI;
+
+            boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
+            if(inPlayerFov && DistanceFromPlayer >= 0.9 && DistanceFromPlayer < Depth)
+            {
+                int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
+                int objectFloor = (int)Height - objectCeiling;
+                int objectHeight = objectFloor - objectCeiling;
+                double objectAspectRatio = (double) sprite.getFrame(sprite.pointer).getHeight() / (double) sprite.getFrame(sprite.pointer).getWidth();
+                int objectWidth = (int)(objectHeight / objectAspectRatio);
+                double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
+                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock)
+                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock)
+                    {
+                        double sampleX = lx / objectWidth;
+                        double sampleY = ly / objectHeight;
+                        int objectColumn = (int)( middleOfObject + lx - (objectWidth / 2.0) ) ;
+                        if(objectColumn >= 0 && objectColumn < Width)
+                        {
+                            if(Buffer[objectColumn] >= DistanceFromPlayer)
+                            {
+                                gc.setFill(sprite.getFrame(sprite.pointer).getSampleColor(sampleX,sampleY));
+                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
+                                Buffer[objectColumn] = DistanceFromPlayer;
+                                // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
+
+                                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action && !sprite.synchSprite && weaponArrayList.get(slot).synchronization && DistanceFromPlayer < weaponArrayList.get(slot).distance) {
+                                    sprite.anim();
+                                }
+                            }
+                        }
+                    }
+            }
+        }
+        listOfEnemies.removeIf(n->(n.getFrame(0).getRemoveTag()));
+    }
     public void drawStatic()
     {
         gc.setFill(Color.RED);
         gc.fillText(plansza.export(),0,5);
-        gc.drawImage(weapon.getFrame(pointerWeapon).getSprite(),weapon.getFrame(pointerWeapon).getPositionX(),weapon.getFrame(pointerWeapon).getPositionY());//bronkie rysujemy co klatke
+        gc.drawImage(weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getSprite(),weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getPositionX(),weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getPositionY());//bronkie rysujemy co klatke
     }
     public void move(double fps)
     {
         int oldPLayerX = (int) playerX;
         int oldPlayerY = (int) playerY;
 
-        if(!oldAction)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz
-            if(!synchrAction)//nie jest wykonywana animacja
+        //if(!oldAction)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz
+            if(!weaponArrayList.get(slot).synchronization)//nie jest wykonywana animacja
                 if(action)
                 {
-                    shoot(fps);
+                    shoot();
                 }
 
         if(right)
@@ -389,22 +501,9 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         mediaPlayer = new MediaPlayer(doorSound);
         mediaPlayer.play();
     }
-    void shoot(double elapsedTime) {//ALE mozemy zmmienic indeks broni ktory rysujemy co te klatke
-        synchrAction = true;//mamy wlaczona animacje nie mozna jej zatrzymac
-        Timeline gameLoop = new Timeline();
-        gameLoop.setCycleCount( weapon.getLength() );
-        KeyFrame kf = new KeyFrame(Duration.seconds(weapon.getDuration()),
-                event -> {
-                    pointerWeapon++;
-                    if(pointerWeapon >= weapon.getLength()) {
-                        pointerWeapon = 0;
-                        synchrAction = false;//animacja sie skonczyla mozna dodac nowa
-                    }
-                });
-        gameLoop.getKeyFrames().add( kf );
-        gameLoop.play();
-        mediaPlayer = new MediaPlayer(weaponSound);
-        mediaPlayer.play();
+    void shoot() {
+        if(weaponArrayList.get(slot).currentAmmo > 0)
+            weaponArrayList.get(slot).shoot(mediaPlayer);
     }
     public void LEFT(boolean input)
     {
@@ -435,4 +534,8 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         action = input;
     }
 
+    public void SLOT(int code) {
+         if(code - 49 < weaponArrayList.size() && code - 49 >= 0)
+             slot = code - 49;
+    }
 }
