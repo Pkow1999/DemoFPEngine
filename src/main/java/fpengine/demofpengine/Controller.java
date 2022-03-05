@@ -51,6 +51,7 @@ public class Controller{
 
         Media media = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\TheWildSide.mp3").toURI().toString());
         backgroundSound = new MediaPlayer(media);
+        backgroundSound.setVolume(0.1);
         backgroundSound.setCycleCount(MediaPlayer.INDEFINITE);
         backgroundSound.setAutoPlay(true);
         Platform.runLater(this::runWithoutThread);

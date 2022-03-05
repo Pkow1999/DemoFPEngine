@@ -1,9 +1,15 @@
 package fpengine.demofpengine;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sprite {
     private int Width;

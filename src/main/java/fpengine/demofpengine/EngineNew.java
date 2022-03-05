@@ -9,10 +9,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
+import javafx.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 //Oparte o: https://lodev.org/cgtutor/raycasting.html
@@ -34,6 +37,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     Sprite wall;
     Sprite door;
     Sprite bWall;
+    Sprite bloodSplatter;
     ArrayList<Color> floorColor;
     ArrayList<Sprite> listOfObjects;
     ArrayList<EnemySprite> listOfEnemies;
@@ -45,12 +49,16 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     GraphicsContext gc;
     double Buffer[];
     Media doorSound;
+    Media playerHurt;
     MediaPlayer mediaPlayer;
     ArrayList<Weapon> weaponArrayList;
     int slot = 1;
+    int hurt;
+    ArrayList<Pair<Integer,Integer>> hurtPosition;
     EngineNew(GraphicsContext context)
     {
         oldAction = false;
+        hurtPosition = new ArrayList<>();
         try {
             plansza = new Map("Maps\\plansza1.txt");
         } catch (IOException e) {
@@ -67,7 +75,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
 
         AnimatedSprite pistol = new AnimatedSprite(0.100);
-        weapon0.dmg = 65;
+        weapon0.dmg = 45;
         for(int i = 1; i < 6;i++)
         {
             pistol.add(
@@ -82,7 +90,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             );
         }
         Weapon weapon1 = new Weapon(pistol,"sounds\\Pistol.wav",30,120,8);
-        weapon1.dmg = 25;
+        weapon1.dmg = 20;
         AnimatedSprite mg = new AnimatedSprite(0.040);
 
         for(int i = 1; i < 4;i++)
@@ -98,79 +106,40 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     //by Z. Franz
             );
         }
-        Weapon weapon2 = new Weapon(mg, "sounds\\Pistol.wav", 30, 120, 6);
-        weapon2.dmg = 15;
+        Weapon weapon2 = new Weapon(mg, "sounds\\MachineGun.wav", 30, 120, 6);
+        weapon2.dmg = 18;
 
 
         weaponArrayList = new ArrayList<>();
         weaponArrayList.add(weapon0);
         weaponArrayList.add(weapon1);
         weaponArrayList.add(weapon2);
-        doorSound = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\Door.wav").toURI().toString());
         floorColor = new ArrayList<>();
         floorColor.add(Color.DARKGREEN);
         floorColor.add(floorColor.get(0).darker());
         floorColor.add(floorColor.get(1).darker());
 
+        playerHurt = new Media(new File("sounds\\PlayerPain1.wav").toURI().toString());
+        doorSound = new Media(new File("sounds\\Door.wav").toURI().toString());
+
         wall = new Sprite(new File("sprites\\wall.png").toURI().toString(),null);
         door = new Sprite(new File("sprites\\door.png").toURI().toString(),null);
         bWall = new Sprite(new File("sprites\\Blue_wall.gif").toURI().toString(),null);
+        bloodSplatter = new Sprite(new File("sprites\\blood.png").toURI().toString(),null);
 
         listOfObjects = new ArrayList<>();
-        //listOfObjects.add(new Sprite(new File("sprites\\barrel.png").toURI().toString(),4.5,3.5 ,Color.BLACK));
+
         listOfObjects.add(new Sprite(new File("sprites\\barrel.png").toURI().toString(),14.5,7.5, Color.BLACK));
         listOfObjects.add(new Sprite(new File("sprites\\greenlight.png").toURI().toString(),3,6.5, Color.BLACK));
 
-//        AnimatedSprite enemy = new AnimatedSprite(0.15);
-//        enemy.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,6.5, Color.rgb(152,0,136)) ) ;
-//
-//        for(int i = 1; i < 5;i++)
-//        {
-//           enemy.add(
-//                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),
-//                            enemy.getFrame(0).getPositionX(),enemy.getFrame(0).getPositionY(),
-//                            Color.rgb(152,0,136)
-//
-//                    )
-//            );
-//        }
-//
-//        AnimatedSprite enemy2 = new AnimatedSprite(0.15);
-//        enemy2.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),4.5,3.5, Color.rgb(152,0,136)) ) ;
-//
-//        for(int i = 1; i < 5;i++)
-//        {
-//            enemy2.add(
-//                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),
-//                            enemy2.getFrame(0).getPositionX(),enemy2.getFrame(0).getPositionY(),
-//                            Color.rgb(152,0,136)
-//
-//                    )
-//            );
-//        }
-//
-//        AnimatedSprite enemy1 = new AnimatedSprite(0.15);
-//        enemy1.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,4, Color.rgb(152,0,136)) ) ;
-//
-//        for(int i = 1; i < 5;i++)
-//        {
-//            enemy1.add(
-//                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),
-//                            enemy1.getFrame(0).getPositionX(),enemy1.getFrame(0).getPositionY(),
-//                            Color.rgb(152,0,136)
-//
-//                    )
-//            );
-//        }
-//
         listOfEnemies = new ArrayList<>();
-        listOfEnemies.add(new EnemySprite(4.5,3.5));
+        listOfEnemies.add(new EnemySprite(10.5,3.5));
         listOfEnemies.add(new EnemySprite(13.5,4));
         listOfEnemies.add(new EnemySprite(13.5,6.5));
 //        listOfEnemies.add(enemy);
 //        listOfEnemies.add(enemy1);
 //        listOfEnemies.add(enemy2);
-        Buffer = new double[(int) Width];
+        Buffer = new double[(int) Width];//blok pamieci ktory przechowuje w pamieci dystans do scinay w kazdym z odcinkow bloku ktory generujemy
     }
     void drawMap()
     {
@@ -317,9 +286,9 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         }
     }
 
-    // TODO: 02.03.2022 dalej jest problem z przenikajacymi sprite'ami
     public void drawObjects()
     {
+
         for(Sprite sprite : listOfObjects)
         {
             double vecX = sprite.getPositionX() - playerX;
@@ -354,15 +323,13 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                         int objectColumn = (int)( middleOfObject + lx - (objectWidth / 2.0) ) ;
                         if(objectColumn >= 0 && objectColumn < Width)
                         {
-                            if(Buffer[objectColumn] >= DistanceFromPlayer)
+                            if(Buffer[objectColumn] >= DistanceFromPlayer)//bufor sprawdza czy distance do walla jest wiekszy niz do sprite'a, jak to pokaz sprite'a
                             {
                                 gc.setFill(sprite.getSampleColor(sampleX,sampleY));
                                 gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
                                 Buffer[objectColumn] = DistanceFromPlayer;
-                               // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
 
-                                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action)
-                                    sprite.setRemoveTag(true);
+                               // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
                             }
                         }
                     }
@@ -371,9 +338,12 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         listOfObjects.removeIf(Sprite::getRemoveTag);
     }
 
+
+    // TODO: 05.03.2022 Problem z nalozeniem sprite'ow rozwiazany: zostal problem ze strzelaniem przez sciany
     public void drawEnemies()
     {
-        //sortEnemies();
+        sortEnemies();
+        listOfEnemies.sort((p1,p2) -> (int) p1.getPositionX());
         for(EnemySprite sprite : listOfEnemies)
         {
             double vecX = sprite.getPositionX() - playerX;
@@ -392,12 +362,26 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 objectAngle -= 2.0 * Math.PI;
 
             boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
+
+            if(DistanceFromPlayer < 4.0 && sprite.ai && !sprite.recentlyShoot)
+            {
+                sprite.shoot(mediaPlayer);
+                Random random = new Random();
+                double chance = random.nextInt(100);
+                if(chance / DistanceFromPlayer > 0)
+                {
+                    hurt += 200;
+                    hurtPosition.add(new Pair<>(random.nextInt((int) Width), random.nextInt((int) Height)));
+                    mediaPlayer = new MediaPlayer(playerHurt);
+                    mediaPlayer.play();
+                }
+            }
             if(inPlayerFov && DistanceFromPlayer >= 0.9 && DistanceFromPlayer < Depth)
             {
                 int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
                 int objectFloor = (int)Height - objectCeiling;
                 int objectHeight = objectFloor - objectCeiling;
-                double objectAspectRatio = (double) sprite.getHeight() / (double) sprite.getWidth();
+                double objectAspectRatio = sprite.getHeight() / sprite.getWidth();
                 int objectWidth = (int)(objectHeight / objectAspectRatio);
                 double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
                 for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock)
@@ -414,10 +398,19 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                                 gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
                                 Buffer[objectColumn] = DistanceFromPlayer;
                                 // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
+
                                 if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action) //jesli jest w naszym polu widzenia i jest wykonywana akcja strzelania
                                 {
+                                    //funny thing - status 0 to zwykle stanie a status 1 strzelanie
+                                    //ten status jest po to aby nie zalapalo nam przez przypadek kilku dmgu w trakcie jednego strzalu
+                                    //tzn dmg dostaje tylko jak nic nie robi albo strzela
+                                    //w innym wypadku gra pokazuje animacje dostawania bolu (ktora jest na tyle krotka ze czlowiek nie powinien zwrocic uwagi na to ze ktos jest niewrazliwy)
+                                    //(albo jest martwy co w sumie sprawia ze i tak nie powinien dostawac zadnego dmg)
                                     if(sprite.status < 2 && weaponArrayList.get(slot).synchronization && weaponArrayList.get(slot).weaponSprite.pointer == 0 && DistanceFromPlayer < weaponArrayList.get(slot).distance)//jesli nasz przeciwnik nie wykonuje zadnej animacji oraz bron nie wykonuje zadnej animacji oraz jestesmy w odpowiednim dystansie
-                                        sprite.getDMG((int) (weaponArrayList.get(slot).dmg / DistanceFromPlayer), mediaPlayer);//go kill
+                                    {
+                                        int dmg = (int) (weaponArrayList.get(slot).dmg / (DistanceFromPlayer/3.0 ));
+                                        sprite.getDMG(dmg, mediaPlayer);//go kill
+                                    }
                                 }
                             }
                         }
@@ -428,6 +421,16 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     }
     public void drawStatic()
     {
+        if(hurt > 0)
+        {
+            for(int i = 0; i < hurtPosition.size(); i++)
+            {
+                gc.drawImage(bloodSplatter.getSprite(), hurtPosition.get(i).getKey(), hurtPosition.get(i).getValue());
+            }
+            hurt--;
+            if(hurt%200 == 1 )
+                hurtPosition.remove(0);
+        }
         gc.setFill(Color.RED);
         gc.fillText(plansza.export(),0,5);
         gc.drawImage(weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getSprite(),weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getPositionX(),weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getPositionY());//bronkie rysujemy co klatke
@@ -557,5 +560,20 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     public void SLOT(int code) {
          if(code - 49 < weaponArrayList.size() && code - 49 >= 0)
              slot = code - 49;
+    }
+    void sortEnemies()
+    {
+        ArrayList<Pair<Double, Integer>> indexArray = new ArrayList<>();
+        for(int i = 0; i < listOfEnemies.size(); i++)
+        {
+            double dist = Math.pow(playerX - listOfEnemies.get(i).getPositionX(), 2) + Math.pow(playerY - listOfEnemies.get(i).getPositionY(),2);
+            indexArray.add(new Pair<>(dist,i));
+        }
+        indexArray.sort(Comparator.comparingDouble(Pair<Double,Integer>::getKey).thenComparingInt(Pair::getValue));
+        ArrayList<EnemySprite> copy = new ArrayList<>(listOfEnemies);
+        for (int i = 0; i < listOfEnemies.size(); i++)
+        {
+            listOfEnemies.set(i, copy.get(indexArray.get(copy.size() - i - 1).getValue()));
+        }
     }
 }
