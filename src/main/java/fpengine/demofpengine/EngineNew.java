@@ -36,7 +36,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     Sprite bWall;
     ArrayList<Color> floorColor;
     ArrayList<Sprite> listOfObjects;
-    ArrayList<AnimatedSprite> listOfEnemies;
+    ArrayList<EnemySprite> listOfEnemies;
 
     int sizeOfBlock = 4;
     final double Height;
@@ -46,8 +46,6 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     double Buffer[];
     Media doorSound;
     MediaPlayer mediaPlayer;
-    Weapon weapon0;
-    Weapon weapon1;
     ArrayList<Weapon> weaponArrayList;
     int slot = 1;
     EngineNew(GraphicsContext context)
@@ -65,11 +63,11 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         gc.setTextAlign(TextAlignment.LEFT);
         gc.setFont(Font.font("Consolas",7));
 
-        weapon0 = new Weapon();
+        Weapon weapon0 = new Weapon();
 
 
         AnimatedSprite pistol = new AnimatedSprite(0.100);
-
+        weapon0.dmg = 65;
         for(int i = 1; i < 6;i++)
         {
             pistol.add(
@@ -83,12 +81,31 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     //by Z. Franz
             );
         }
-        weapon1 = new Weapon(pistol,"sounds\\Pistol.wav",30,120,8);
+        Weapon weapon1 = new Weapon(pistol,"sounds\\Pistol.wav",30,120,8);
+        weapon1.dmg = 25;
+        AnimatedSprite mg = new AnimatedSprite(0.040);
+
+        for(int i = 1; i < 4;i++)
+        {
+            mg.add(
+                    new Sprite(new File("sprites\\weapons\\machinegun\\mg" + i + ".bmp").toURI().toString(),300,300,
+                            (Controller.width - 300)/2,
+                            Controller.height - 300,
+                            Color.rgb(152,0,136)
+
+                    )//Machine Gun Sprites
+
+                    //by Z. Franz
+            );
+        }
+        Weapon weapon2 = new Weapon(mg, "sounds\\Pistol.wav", 30, 120, 6);
+        weapon2.dmg = 15;
+
 
         weaponArrayList = new ArrayList<>();
         weaponArrayList.add(weapon0);
         weaponArrayList.add(weapon1);
-
+        weaponArrayList.add(weapon2);
         doorSound = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\Door.wav").toURI().toString());
         floorColor = new ArrayList<>();
         floorColor.add(Color.DARKGREEN);
@@ -104,52 +121,55 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         listOfObjects.add(new Sprite(new File("sprites\\barrel.png").toURI().toString(),14.5,7.5, Color.BLACK));
         listOfObjects.add(new Sprite(new File("sprites\\greenlight.png").toURI().toString(),3,6.5, Color.BLACK));
 
-        AnimatedSprite enemy = new AnimatedSprite(0.15);
-        enemy.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,6.5, Color.rgb(152,0,136)) ) ;
-
-        for(int i = 1; i < 5;i++)
-        {
-           enemy.add(
-                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),300,300,
-                            enemy.getFrame(0).getPositionX(),enemy.getFrame(0).getPositionY(),
-                            Color.rgb(152,0,136)
-
-                    )
-            );
-        }
-
-        AnimatedSprite enemy2 = new AnimatedSprite(0.15);
-        enemy2.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),4.5,3.5, Color.rgb(152,0,136)) ) ;
-
-        for(int i = 1; i < 5;i++)
-        {
-            enemy2.add(
-                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),300,300,
-                            enemy2.getFrame(0).getPositionX(),enemy2.getFrame(0).getPositionY(),
-                            Color.rgb(152,0,136)
-
-                    )
-            );
-        }
-
-        AnimatedSprite enemy1 = new AnimatedSprite(0.15);
-        enemy1.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,4, Color.rgb(152,0,136)) ) ;
-
-        for(int i = 1; i < 5;i++)
-        {
-            enemy1.add(
-                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),300,300,
-                            enemy1.getFrame(0).getPositionX(),enemy1.getFrame(0).getPositionY(),
-                            Color.rgb(152,0,136)
-
-                    )
-            );
-        }
-
+//        AnimatedSprite enemy = new AnimatedSprite(0.15);
+//        enemy.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,6.5, Color.rgb(152,0,136)) ) ;
+//
+//        for(int i = 1; i < 5;i++)
+//        {
+//           enemy.add(
+//                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),
+//                            enemy.getFrame(0).getPositionX(),enemy.getFrame(0).getPositionY(),
+//                            Color.rgb(152,0,136)
+//
+//                    )
+//            );
+//        }
+//
+//        AnimatedSprite enemy2 = new AnimatedSprite(0.15);
+//        enemy2.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),4.5,3.5, Color.rgb(152,0,136)) ) ;
+//
+//        for(int i = 1; i < 5;i++)
+//        {
+//            enemy2.add(
+//                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),
+//                            enemy2.getFrame(0).getPositionX(),enemy2.getFrame(0).getPositionY(),
+//                            Color.rgb(152,0,136)
+//
+//                    )
+//            );
+//        }
+//
+//        AnimatedSprite enemy1 = new AnimatedSprite(0.15);
+//        enemy1.add(new Sprite (new File ("sprites\\mguard_s_1.bmp").toURI().toString(),13.5,4, Color.rgb(152,0,136)) ) ;
+//
+//        for(int i = 1; i < 5;i++)
+//        {
+//            enemy1.add(
+//                    new Sprite(new File("sprites\\mguard_die" + i + ".bmp").toURI().toString(),
+//                            enemy1.getFrame(0).getPositionX(),enemy1.getFrame(0).getPositionY(),
+//                            Color.rgb(152,0,136)
+//
+//                    )
+//            );
+//        }
+//
         listOfEnemies = new ArrayList<>();
-        listOfEnemies.add(enemy);
-        listOfEnemies.add(enemy1);
-        listOfEnemies.add(enemy2);
+        listOfEnemies.add(new EnemySprite(4.5,3.5));
+        listOfEnemies.add(new EnemySprite(13.5,4));
+        listOfEnemies.add(new EnemySprite(13.5,6.5));
+//        listOfEnemies.add(enemy);
+//        listOfEnemies.add(enemy1);
+//        listOfEnemies.add(enemy2);
         Buffer = new double[(int) Width];
     }
     void drawMap()
@@ -354,10 +374,10 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     public void drawEnemies()
     {
         //sortEnemies();
-        for(AnimatedSprite sprite : listOfEnemies)
+        for(EnemySprite sprite : listOfEnemies)
         {
-            double vecX = sprite.getFrame(sprite.pointer).getPositionX() - playerX;
-            double vecY = sprite.getFrame(sprite.pointer).getPositionY() - playerY;
+            double vecX = sprite.getPositionX() - playerX;
+            double vecY = sprite.getPositionY() - playerY;
             double DistanceFromPlayer = Math.sqrt(vecX * vecX + vecY * vecY);
 
 
@@ -377,7 +397,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
                 int objectFloor = (int)Height - objectCeiling;
                 int objectHeight = objectFloor - objectCeiling;
-                double objectAspectRatio = (double) sprite.getFrame(sprite.pointer).getHeight() / (double) sprite.getFrame(sprite.pointer).getWidth();
+                double objectAspectRatio = (double) sprite.getHeight() / (double) sprite.getWidth();
                 int objectWidth = (int)(objectHeight / objectAspectRatio);
                 double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
                 for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock)
@@ -390,20 +410,21 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                         {
                             if(Buffer[objectColumn] >= DistanceFromPlayer)
                             {
-                                gc.setFill(sprite.getFrame(sprite.pointer).getSampleColor(sampleX,sampleY));
+                                gc.setFill(sprite.getCurrentSprite().getSampleColor(sampleX,sampleY));
                                 gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
                                 Buffer[objectColumn] = DistanceFromPlayer;
                                 // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
-
-                                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action && !sprite.synchSprite && weaponArrayList.get(slot).synchronization && DistanceFromPlayer < weaponArrayList.get(slot).distance) {
-                                    sprite.anim();
+                                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action) //jesli jest w naszym polu widzenia i jest wykonywana akcja strzelania
+                                {
+                                    if(sprite.status < 2 && weaponArrayList.get(slot).synchronization && weaponArrayList.get(slot).weaponSprite.pointer == 0 && DistanceFromPlayer < weaponArrayList.get(slot).distance)//jesli nasz przeciwnik nie wykonuje zadnej animacji oraz bron nie wykonuje zadnej animacji oraz jestesmy w odpowiednim dystansie
+                                        sprite.getDMG((int) (weaponArrayList.get(slot).dmg / DistanceFromPlayer), mediaPlayer);//go kill
                                 }
                             }
                         }
                     }
             }
         }
-        listOfEnemies.removeIf(n->(n.getFrame(0).getRemoveTag()));
+        listOfEnemies.removeIf(n->(n.toRemove));
     }
     public void drawStatic()
     {
@@ -415,8 +436,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     {
         int oldPLayerX = (int) playerX;
         int oldPlayerY = (int) playerY;
-
-        //if(!oldAction)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz
+        if(!oldAction || slot > 1)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz, ogien ciagly jest mozliwy dla pistoletu maszynowego
             if(!weaponArrayList.get(slot).synchronization)//nie jest wykonywana animacja
                 if(action)
                 {

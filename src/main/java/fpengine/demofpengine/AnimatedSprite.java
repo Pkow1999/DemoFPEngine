@@ -7,7 +7,7 @@ import javafx.util.Duration;
 
 import java.util.ArrayList;
 
-public class AnimatedSprite {
+public class AnimatedSprite{
     private ArrayList<Sprite> Frames;
     int pointer = 0;
     private double duration;
@@ -55,7 +55,7 @@ public class AnimatedSprite {
         return Frames.get(frameIndex);
     }
     int getLength(){return Frames.size();}
-    void anim()
+    void anim(boolean repeat)
     {
         synchSprite = true;
             Timeline gameLoop = new Timeline();
@@ -67,6 +67,8 @@ public class AnimatedSprite {
                     pointer++;
                 }
                 else {
+                    if(repeat)
+                        pointer = 0;
                     synchSprite = false;
                 }
                     });

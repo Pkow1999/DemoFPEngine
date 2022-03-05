@@ -16,6 +16,7 @@ public class Weapon {
     int maxAmmo;
     double distance;
     boolean synchronization = false;
+    int dmg;
     Weapon()
     {
         weaponSprite = new AnimatedSprite(0.200);
@@ -52,11 +53,15 @@ public class Weapon {
         gameLoop.setCycleCount( weaponSprite.getLength() );
         KeyFrame kf = new KeyFrame(Duration.seconds(weaponSprite.getDuration()),
                 event -> {
-                    weaponSprite.pointer++;
-                    if(weaponSprite.pointer >= weaponSprite.getLength()) {
-                        weaponSprite.pointer = 0;
-                        synchronization = false;//animacja sie skonczyla mozna dodac nowa
-                    }
+            if(weaponSprite.pointer < weaponSprite.getLength() - 1)
+            {
+                weaponSprite.pointer++;
+            }
+            else
+            {
+                synchronization = false;
+                weaponSprite.pointer = 0;
+            }
                 });
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
