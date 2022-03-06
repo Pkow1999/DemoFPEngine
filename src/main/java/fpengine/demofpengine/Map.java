@@ -3,6 +3,7 @@ package fpengine.demofpengine;
 import javafx.util.Pair;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
 
@@ -10,6 +11,7 @@ public class Map {
     private int Height;
     private int Width;
     private char[][] map;
+    ArrayList<Pair<Integer,Integer>> enemiesPosition;
     public Map(int w, int h)
     {
             Height = h;
@@ -18,13 +20,13 @@ public class Map {
 
             for(int i = 0; i < Height;i++)
                 for(int j =0;j<Width;j++) {
-                    map[i][j] = '#';
+                    map[i][j] = 'X';
                     if(i > 0 && i < Height - 1 && j > 0 && j < Width - 1)
                         map[i][j] = '.';
                 }
-            map[5][5] = '#';
-            map[6][5] = '#';
-            map[7][5] = '#';
+            map[5][5] = 'X';
+            map[6][5] = 'X';
+            map[7][5] = 'X';
     }
 
 
@@ -35,13 +37,13 @@ public class Map {
         DFS(playerX,playerY);
     }
     public Map(String Filepath) throws IOException {
+        enemiesPosition = new ArrayList<>();
         RandomAccessFile fIn = new RandomAccessFile(Filepath,"r");
         int ch;
         Height = 0;
         Width = 0;
         int i = 0;
         int j = 0;
-
         while ((ch = fIn.read()) != -1 )
         {
             if((char)ch == '|')
@@ -57,7 +59,7 @@ public class Map {
         {
             if((char)ch == 'X')
             {
-                map[i][j] = '#';
+                map[i][j] = 'X';
                 j++;
             }
             if((char)ch == 'H')
@@ -73,6 +75,12 @@ public class Map {
             if((char)ch == 'd')
             {
                 map[i][j] = 'd';
+                j++;
+            }
+            if((char)ch =='e')
+            {
+                enemiesPosition.add(new Pair<>(j,i));
+                map[i][j] = '.';
                 j++;
             }
             if((char)ch == '|')
@@ -177,7 +185,7 @@ public class Map {
         for(int i = 0;i < mapH; i++) {
             for (int j = 0; j< mapW;j++)
             {
-                map[i][j] = '#';
+                map[i][j] = 'X';
                 if(i%2==1 && j%2==1)//bierzemy tylko jak pary sa nieparzyste
                     if( (i!=mapH - 1 && j!=mapW-1) || (i!=0 && j!=0) )//zostawiamy obramowania
                         map[i][j] = '.';

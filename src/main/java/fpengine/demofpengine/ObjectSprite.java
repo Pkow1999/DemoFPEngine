@@ -9,12 +9,24 @@ public class ObjectSprite {
     protected double velocityX = 0;
     protected double velocityY = 0;
     boolean toRemove = false;
-
+    ObjectSprite(Sprite sprite, double posX, double posY)
+    {
+        defaultSprite = new ArrayList<>();
+        defaultSprite.add(sprite);
+        positionX = posX;
+        positionY = posY;
+    }
     ObjectSprite(double posX, double posY)
     {
         defaultSprite = new ArrayList<>();
         positionX = posX;
         positionY = posY;
+    }
+    public Sprite getCurrentSprite()
+    {
+        if(defaultSprite.size() > 0)
+            return defaultSprite.get(0);
+        return null;
     }
 
     public double getPositionX() {

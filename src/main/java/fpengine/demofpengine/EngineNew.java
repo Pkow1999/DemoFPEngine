@@ -39,7 +39,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     Sprite bWall;
     Sprite bloodSplatter;
     ArrayList<Color> floorColor;
-    ArrayList<Sprite> listOfObjects;
+    ArrayList<ObjectSprite> listOfObjects;
     ArrayList<EnemySprite> listOfEnemies;
 
     int sizeOfBlock = 4;
@@ -75,7 +75,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
 
         AnimatedSprite pistol = new AnimatedSprite(0.100);
-        weapon0.dmg = 45;
+        weapon0.dmg = 50;
         for(int i = 1; i < 6;i++)
         {
             pistol.add(
@@ -127,18 +127,25 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         bWall = new Sprite(new File("sprites\\Blue_wall.gif").toURI().toString(),null);
         bloodSplatter = new Sprite(new File("sprites\\blood.png").toURI().toString(),null);
 
-        listOfObjects = new ArrayList<>();
 
-        listOfObjects.add(new Sprite(new File("sprites\\barrel.png").toURI().toString(),14.5,7.5, Color.BLACK));
-        listOfObjects.add(new Sprite(new File("sprites\\greenlight.png").toURI().toString(),3,6.5, Color.BLACK));
+        Sprite barrel = new Sprite(new File("sprites\\barrel.png").toURI().toString(), Color.BLACK);
+        Sprite lamp = new Sprite(new File("sprites\\greenlight.png").toURI().toString(), Color.BLACK);
+
+        listOfObjects = new ArrayList<>();
+        listOfObjects.add(new ObjectSprite(barrel,2.5, 1.5 ));
+        listOfObjects.add(new ObjectSprite(lamp,5,3.5 ));
+
 
         listOfEnemies = new ArrayList<>();
-        listOfEnemies.add(new EnemySprite(10.5,3.5));
-        listOfEnemies.add(new EnemySprite(13.5,4));
-        listOfEnemies.add(new EnemySprite(13.5,6.5));
-//        listOfEnemies.add(enemy);
-//        listOfEnemies.add(enemy1);
-//        listOfEnemies.add(enemy2);
+//        listOfEnemies.add(new EnemySprite(10.5,3.5));
+//        listOfEnemies.add(new EnemySprite(13.5,4));
+//        listOfEnemies.add(new EnemySprite(13.5,6.5));
+        for(Pair XY : plansza.enemiesPosition)
+        {
+            int X = (int) XY.getKey();
+            int Y = (int) XY.getValue();
+            listOfEnemies.add(new EnemySprite(X,  Y + 0.5));
+        }
         Buffer = new double[(int) Width];//blok pamieci ktory przechowuje w pamieci dystans do scinay w kazdym z odcinkow bloku ktory generujemy
     }
     void drawMap()
@@ -206,7 +213,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 }
                 //jak znajdujemy sie na mapie (a nie gdzies poza nia)
                 if (mapCheckerX >= 0 && mapCheckerX < plansza.getWidth() && mapCheckerY >= 0 && mapCheckerY < plansza.getHeight()) {
-                    if (plansza.getMap(mapCheckerX, mapCheckerY) == '#')//to sprawdzamy czy trafilismy w sciane
+                    if (plansza.getMap(mapCheckerX, mapCheckerY) == 'X')//to sprawdzamy czy trafilismy w sciane
                     {
                         hitWall = true;
 
@@ -289,7 +296,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     public void drawObjects()
     {
 
-        for(Sprite sprite : listOfObjects)
+        for(ObjectSprite sprite : listOfObjects)
         {
             double vecX = sprite.getPositionX() - playerX;
             double vecY = sprite.getPositionY() - playerY;
@@ -306,17 +313,28 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             if(objectAngle > Math.PI)
                 objectAngle -= 2.0 * Math.PI;
 
-            boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
-            if(inPlayerFov && DistanceFromPlayer >= 0.9 && DistanceFromPlayer < Depth)
+            boolean inPlayerFov = Math.abs(objectAngle) < Math.abs( FOV );//btw zmienilem tu z 1/2 fova bo wtedy rzadziej rzeczy pop-upuje
+            //i CHYBA pop up jest zrodlem problemu przedstawionego ponizej, ale watpie bo klatkuje rowniez jak sprite
+            //jest po prostu blizej
+            if(inPlayerFov && DistanceFromPlayer > 0.5 && DistanceFromPlayer < Depth)
             {
                 int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
                 int objectFloor = (int)Height - objectCeiling;
                 int objectHeight = objectFloor - objectCeiling;
-                double objectAspectRatio = (double) sprite.getHeight() / (double) sprite.getWidth();
+                double objectAspectRatio = sprite.getHeight() / sprite.getWidth();
                 double objectWidth = objectHeight / objectAspectRatio;
                 double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
-                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock)
-                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock)
+
+                //Huh sztuczka optymalizacyjna jaka wymyslilem:
+                //jesli jestes blizej obiektu to mozesz ZMNIEJSZYC jakosc
+                //rysowania obiektu
+                //z jakiegos powodu im blizej jestesmy obiektu (albo im wiecej zajmuje przestrzeni) tym bardziej
+                //gierka klatkuje
+                int ratio = 1;
+                if(objectWidth > Width/2)
+                    ratio = 2;
+                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock * ratio)
+                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock * ratio)
                     {
                         double sampleX = lx / objectWidth;
                         double sampleY = ly / objectHeight;
@@ -325,8 +343,8 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                         {
                             if(Buffer[objectColumn] >= DistanceFromPlayer)//bufor sprawdza czy distance do walla jest wiekszy niz do sprite'a, jak to pokaz sprite'a
                             {
-                                gc.setFill(sprite.getSampleColor(sampleX,sampleY));
-                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
+                                gc.setFill(sprite.getCurrentSprite().getSampleColor(sampleX,sampleY));
+                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock * ratio,sizeOfBlock * ratio);
                                 Buffer[objectColumn] = DistanceFromPlayer;
 
                                // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
@@ -335,15 +353,16 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     }
             }
         }
-        listOfObjects.removeIf(Sprite::getRemoveTag);
+        listOfObjects.removeIf(objectSprite -> objectSprite.toRemove);
     }
 
 
     // TODO: 05.03.2022 Problem z nalozeniem sprite'ow rozwiazany: zostal problem ze strzelaniem przez sciany
     public void drawEnemies()
     {
-        sortEnemies();
-        listOfEnemies.sort((p1,p2) -> (int) p1.getPositionX());
+        sortEnemies();//to sortowanie... dziala.. sprite'y sie nie nakladaja ale boje sie o performence poprzez kopiowanie calej tablicy
+        //jak wymysle/znajde sposob by jej nie kopiowac to poprawie ale nie jest to duzy priorytem
+        //choc wymaga wiecej testowania bo nie wiem jak sie zachowuje przy duzej ilosci sprite'ow
         for(EnemySprite sprite : listOfEnemies)
         {
             double vecX = sprite.getPositionX() - playerX;
@@ -361,7 +380,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             if(objectAngle > Math.PI)
                 objectAngle -= 2.0 * Math.PI;
 
-            boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV / 2.0);
+            boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV );//jak jest normalny fov to nie ma pop upu od srodka sprite'a
 
             if(DistanceFromPlayer < 4.0 && sprite.ai && !sprite.recentlyShoot)
             {
@@ -376,7 +395,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     mediaPlayer.play();
                 }
             }
-            if(inPlayerFov && DistanceFromPlayer >= 0.9 && DistanceFromPlayer < Depth)
+            if(inPlayerFov && DistanceFromPlayer >= 0.5 && DistanceFromPlayer < Depth)
             {
                 int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
                 int objectFloor = (int)Height - objectCeiling;
@@ -384,8 +403,16 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 double objectAspectRatio = sprite.getHeight() / sprite.getWidth();
                 int objectWidth = (int)(objectHeight / objectAspectRatio);
                 double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
-                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock)
-                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock)
+
+                //sprobujmy zrobic to samo dla ludzi
+                int ratio = 1;
+                if(objectWidth > Width/2)
+                    ratio = 2;
+                //dziala i nie wyglada az tak tragicznie
+                //kurcze na ludzi to dziala mam wrazenie znacznie lepiej (nie zauwazylem zadnego dropu) wiec musze sie przyjrzec tym beczkom
+                //moze format? (png/gif)
+                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock * ratio)
+                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock * ratio)
                     {
                         double sampleX = lx / objectWidth;
                         double sampleY = ly / objectHeight;
@@ -395,7 +422,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                             if(Buffer[objectColumn] >= DistanceFromPlayer)
                             {
                                 gc.setFill(sprite.getCurrentSprite().getSampleColor(sampleX,sampleY));
-                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock,sizeOfBlock);
+                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock * ratio,sizeOfBlock * ratio);
                                 Buffer[objectColumn] = DistanceFromPlayer;
                                 // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
 
@@ -460,7 +487,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             playerY += Math.cos(playerAngle) * 4 * fps;
 
 
-            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
+            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX -= Math.sin(playerAngle) * 4 * fps;
                 playerY -= Math.cos(playerAngle) * 4 * fps;
@@ -471,7 +498,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             playerX -= Math.sin(playerAngle) * 4 * fps;
             playerY -= Math.cos(playerAngle) * 4 * fps;
 
-            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
+            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX += Math.sin(playerAngle) * 4 * fps;
                 playerY += Math.cos(playerAngle) * 4 * fps;
@@ -483,7 +510,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             playerY -= Math.sin(playerAngle) * 4 * fps;
 
 
-            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
+            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX -= Math.cos(playerAngle) * 4 * fps;
                 playerY += Math.sin(playerAngle) * 4 * fps;
@@ -496,7 +523,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             playerY += Math.sin(playerAngle) * 4 * fps;
 
 
-            if(plansza.getMap((int) playerX,(int) playerY) == '#' || plansza.getMap((int) playerX,(int) playerY) == 'H')
+            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
             {
                 playerX += Math.cos(playerAngle) * 4 * fps;
                 playerY -= Math.sin(playerAngle) * 4 * fps;

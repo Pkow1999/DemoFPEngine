@@ -195,6 +195,8 @@ public class EnemySprite extends ObjectSprite {
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
     }
+
+    @Override
     public Sprite getCurrentSprite()
     {
         if(status == 0 && ai)
