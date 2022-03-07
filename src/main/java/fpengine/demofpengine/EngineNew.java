@@ -440,7 +440,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             }
             //jak znajdujemy sie na mapie (a nie gdzies poza nia)
             if (mapCheckerX >= 0 && mapCheckerX < plansza.getWidth() && mapCheckerY >= 0 && mapCheckerY < plansza.getHeight()) {
-                if (plansza.getMap(mapCheckerX, mapCheckerY) == 'X' || plansza.getMap(mapCheckerX, mapCheckerY) == 'd')//to sprawdzamy czy trafilismy w sciane
+                if (plansza.getMap(mapCheckerX, mapCheckerY) == 'X' || plansza.getMap(mapCheckerX, mapCheckerY) == 'd' || plansza.getMap(mapCheckerX, mapCheckerY) == 'H')//to sprawdzamy czy trafilismy w sciane
                 {
                     wall = true;
                 }
