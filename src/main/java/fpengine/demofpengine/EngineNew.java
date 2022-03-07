@@ -40,7 +40,6 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     Sprite bloodSplatter;
     ArrayList<Color> floorColor;
     ArrayList<ObjectSprite> listOfObjects;
-    ArrayList<EnemySprite> listOfEnemies;
 
     int sizeOfBlock = 4;
     final double Height;
@@ -132,11 +131,11 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         Sprite lamp = new Sprite(new File("sprites\\greenlight.png").toURI().toString(), Color.BLACK);
 
         listOfObjects = new ArrayList<>();
-        listOfObjects.add(new ObjectSprite(barrel,2.5, 1.5 ));
-        listOfObjects.add(new ObjectSprite(lamp,5,3.5 ));
+        listOfObjects.add(new ObjectSprite(barrel,2.5, 4.5 ));
+        listOfObjects.add(new ObjectSprite(barrel,2.5, 2.5 ));
+        listOfObjects.add(new ObjectSprite(lamp,5,6 ));
 
 
-        listOfEnemies = new ArrayList<>();
 //        listOfEnemies.add(new EnemySprite(10.5,3.5));
 //        listOfEnemies.add(new EnemySprite(13.5,4));
 //        listOfEnemies.add(new EnemySprite(13.5,6.5));
@@ -144,7 +143,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         {
             int X = (int) XY.getKey();
             int Y = (int) XY.getValue();
-            listOfEnemies.add(new EnemySprite(X,  Y + 0.5));
+            listOfObjects.add(new EnemySprite(X,  Y + 0.5));
         }
         Buffer = new double[(int) Width];//blok pamieci ktory przechowuje w pamieci dystans do scinay w kazdym z odcinkow bloku ktory generujemy
     }
@@ -293,78 +292,23 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         }
     }
 
-    public void drawObjects()
+    public void drawObjects(double fps)
     {
-
-        for(ObjectSprite sprite : listOfObjects)
-        {
-            double vecX = sprite.getPositionX() - playerX;
-            double vecY = sprite.getPositionY() - playerY;
-            double DistanceFromPlayer = Math.sqrt(vecX * vecX + vecY * vecY);
-
-
-            double EyeX = Math.sin(playerAngle);
-            double EyeY = Math.cos(playerAngle);
-            double objectAngle = Math.atan2(EyeY, EyeX) - Math.atan2(vecY,vecX);
-
-
-            if(objectAngle < -Math.PI)
-                objectAngle += 2.0 * Math.PI;
-            if(objectAngle > Math.PI)
-                objectAngle -= 2.0 * Math.PI;
-
-            boolean inPlayerFov = Math.abs(objectAngle) < Math.abs( FOV );//btw zmienilem tu z 1/2 fova bo wtedy rzadziej rzeczy pop-upuje
-            //i CHYBA pop up jest zrodlem problemu przedstawionego ponizej, ale watpie bo klatkuje rowniez jak sprite
-            //jest po prostu blizej
-            if(inPlayerFov && DistanceFromPlayer > 0.5 && DistanceFromPlayer < Depth)
-            {
-                int objectCeiling = (int) ((Height / 2.0) - (Height / DistanceFromPlayer));
-                int objectFloor = (int)Height - objectCeiling;
-                int objectHeight = objectFloor - objectCeiling;
-                double objectAspectRatio = sprite.getHeight() / sprite.getWidth();
-                double objectWidth = objectHeight / objectAspectRatio;
-                double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
-
-                //Huh sztuczka optymalizacyjna jaka wymyslilem:
-                //jesli jestes blizej obiektu to mozesz ZMNIEJSZYC jakosc
-                //rysowania obiektu
-                //z jakiegos powodu im blizej jestesmy obiektu (albo im wiecej zajmuje przestrzeni) tym bardziej
-                //gierka klatkuje
-                int ratio = 1;
-                if(objectWidth > Width/2)
-                    ratio = 2;
-                for(double lx = 0; lx < objectWidth; lx+=sizeOfBlock * ratio)
-                    for(double ly = 0; ly < objectHeight; ly+=sizeOfBlock * ratio)
-                    {
-                        double sampleX = lx / objectWidth;
-                        double sampleY = ly / objectHeight;
-                        int objectColumn = (int)( middleOfObject + lx - (objectWidth / 2.0) ) ;
-                        if(objectColumn >= 0 && objectColumn < Width)
-                        {
-                            if(Buffer[objectColumn] >= DistanceFromPlayer)//bufor sprawdza czy distance do walla jest wiekszy niz do sprite'a, jak to pokaz sprite'a
-                            {
-                                gc.setFill(sprite.getCurrentSprite().getSampleColor(sampleX,sampleY));
-                                gc.fillRect(objectColumn,objectCeiling + ly - 1,sizeOfBlock * ratio,sizeOfBlock * ratio);
-                                Buffer[objectColumn] = DistanceFromPlayer;
-
-                               // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
-                            }
-                        }
-                    }
-            }
-        }
-        listOfObjects.removeIf(objectSprite -> objectSprite.toRemove);
-    }
-
-
-    // TODO: 05.03.2022 Problem z nalozeniem sprite'ow rozwiazany: zostal problem ze strzelaniem przez sciany
-    public void drawEnemies()
-    {
-        sortEnemies();//to sortowanie... dziala.. sprite'y sie nie nakladaja ale boje sie o performence poprzez kopiowanie calej tablicy
+        sortObjects();//to sortowanie... dziala.. sprite'y sie nie nakladaja ale boje sie o performence poprzez kopiowanie calej tablicy
         //jak wymysle/znajde sposob by jej nie kopiowac to poprawie ale nie jest to duzy priorytem
         //choc wymaga wiecej testowania bo nie wiem jak sie zachowuje przy duzej ilosci sprite'ow
-        for(EnemySprite sprite : listOfEnemies)
+        for(ObjectSprite sprite : listOfObjects)
         {
+
+
+            sprite.positionX -= sprite.velocityX * fps;
+            sprite.positionY -= sprite.velocityY * fps;
+            if(plansza.getMap((int)sprite.getPositionX(), (int)sprite.getPositionY()) == 'X')
+            {
+
+                sprite.positionX += sprite.velocityX * fps;
+                sprite.positionY += sprite.velocityY * fps;
+            }
             double vecX = sprite.getPositionX() - playerX;
             double vecY = sprite.getPositionY() - playerY;
             double DistanceFromPlayer = Math.sqrt(vecX * vecX + vecY * vecY);
@@ -380,20 +324,11 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             if(objectAngle > Math.PI)
                 objectAngle -= 2.0 * Math.PI;
 
-            boolean inPlayerFov = Math.abs(objectAngle) <Math.abs( FOV );//jak jest normalny fov to nie ma pop upu od srodka sprite'a
+            boolean inPlayerFov = Math.abs(objectAngle) < Math.abs( FOV );//jak jest normalny fov to nie ma pop upu od srodka sprite'a
 
-            if(DistanceFromPlayer < 4.0 && sprite.ai && !sprite.recentlyShoot)
+            if(sprite.ai)
             {
-                sprite.shoot(mediaPlayer);
-                Random random = new Random();
-                double chance = random.nextInt(100);
-                if(chance / DistanceFromPlayer > 0)
-                {
-                    hurt += 200;
-                    hurtPosition.add(new Pair<>(random.nextInt((int) Width), random.nextInt((int) Height)));
-                    mediaPlayer = new MediaPlayer(playerHurt);
-                    mediaPlayer.play();
-                }
+                aiComputation(DistanceFromPlayer,(EnemySprite) sprite, Math.atan2(vecX,vecY));
             }
             if(inPlayerFov && DistanceFromPlayer >= 0.5 && DistanceFromPlayer < Depth)
             {
@@ -433,10 +368,11 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                                     //tzn dmg dostaje tylko jak nic nie robi albo strzela
                                     //w innym wypadku gra pokazuje animacje dostawania bolu (ktora jest na tyle krotka ze czlowiek nie powinien zwrocic uwagi na to ze ktos jest niewrazliwy)
                                     //(albo jest martwy co w sumie sprawia ze i tak nie powinien dostawac zadnego dmg)
-                                    if(sprite.status < 2 && weaponArrayList.get(slot).synchronization && weaponArrayList.get(slot).weaponSprite.pointer == 0 && DistanceFromPlayer < weaponArrayList.get(slot).distance)//jesli nasz przeciwnik nie wykonuje zadnej animacji oraz bron nie wykonuje zadnej animacji oraz jestesmy w odpowiednim dystansie
-                                    {
+                                    if(sprite.status < 3 && weaponArrayList.get(slot).synchronization && weaponArrayList.get(slot).weaponSprite.pointer == 0 && DistanceFromPlayer < weaponArrayList.get(slot).distance)//jesli nasz przeciwnik nie wykonuje zadnej animacji oraz bron nie wykonuje zadnej animacji oraz jestesmy w odpowiednim dystansie
+                                    {//sprite status o wartosci maxValue to stale sprite'y
                                         int dmg = (int) (weaponArrayList.get(slot).dmg / (DistanceFromPlayer/3.0 ));
-                                        sprite.getDMG(dmg, mediaPlayer);//go kill
+                                        EnemySprite enemy = (EnemySprite)  sprite;
+                                        enemy.getDMG(dmg, mediaPlayer);//go kill
                                     }
                                 }
                             }
@@ -444,7 +380,99 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     }
             }
         }
-        listOfEnemies.removeIf(n->(n.toRemove));
+        listOfObjects.removeIf(n->(n.toRemove));
+    }
+
+
+    //TODO - pojawil sie nowy bug z zadawaniem kilkunastu obrazen kiedy idziesz w kierunku wroga
+    public void aiComputation(double DistanceToPlayer,  EnemySprite sprite, double enemyAngle) {
+        boolean wall = false;
+        double EyeX = -Math.sin(enemyAngle);
+        double EyeY = -Math.cos(enemyAngle);
+        double distance = 0;
+
+
+        //nasz krok przesuniecia po indeksach tabeli ala mapy/planszy
+        int stepx;
+        int stepy;
+
+        //nasz krok przesuniecia w oparciu o kat patrzenia naszej postaci przesuniety o pole w indeksie
+        double Sx = Math.sqrt(1.0 + (EyeY / EyeX) * (EyeY / EyeX));
+        double Sy = Math.sqrt(1.0 + (EyeX / EyeY) * (EyeX / EyeY));
+
+        //dlugosc promienia jednowymiarowego w osiach X i Y
+        double rayLenght1Dx;
+        double rayLenght1Dy;
+
+        //nasze indeksy do sprawdzenia czy znajduje sie w nich sciana
+        int mapCheckerX = (int) sprite.getPositionX();
+        int mapCheckerY = (int) sprite.getPositionY();
+
+        //sprawdzenie w ktora strone sie patrzymy
+        //jesli w lewo na naszej tabeli to indeksy sie beda nam zmniejszac
+        if (EyeX < 0) {
+            stepx = -1;
+            rayLenght1Dx = (sprite.getPositionX() - mapCheckerX) * Sx;
+        } else {//jak w prawo to zwiekszac
+            stepx = 1;
+            rayLenght1Dx = (mapCheckerX + 1.0 - sprite.getPositionX()) * Sx;
+        }
+        //jesli patrzymy w gore to zmniejszac
+        if (EyeY < 0) {
+            stepy = -1;
+            rayLenght1Dy = (sprite.getPositionY() - mapCheckerY) * Sy;
+        } else {//jak w dol to zwiekszac
+            stepy = 1;
+            rayLenght1Dy = (mapCheckerY + 1.0 - sprite.getPositionY()) * Sy;
+        }
+
+        //liczymy nasza odleglosc dopoki nie trafimy na sciane/drzwi albo nasz nasz draw distance sie skonczy
+        while (!wall && distance < DistanceToPlayer) {
+            //bierzemy najmniejszy promien
+            if (rayLenght1Dx < rayLenght1Dy) {
+                mapCheckerX += stepx;//i nasz promien idzie w osi X
+                distance = rayLenght1Dx;
+                rayLenght1Dx += Sx;
+            } else {
+                mapCheckerY += stepy;//albo w osi Y jesli promien jednowymiarowy Y byl mniejszy
+                distance = rayLenght1Dy;
+                rayLenght1Dy += Sy;
+            }
+            //jak znajdujemy sie na mapie (a nie gdzies poza nia)
+            if (mapCheckerX >= 0 && mapCheckerX < plansza.getWidth() && mapCheckerY >= 0 && mapCheckerY < plansza.getHeight()) {
+                if (plansza.getMap(mapCheckerX, mapCheckerY) == 'X' || plansza.getMap(mapCheckerX, mapCheckerY) == 'd')//to sprawdzamy czy trafilismy w sciane
+                {
+                    wall = true;
+                }
+            }
+            else wall = true;
+        }
+
+        if (!sprite.recentlyShoot && DistanceToPlayer <= 4.0 && !wall) {
+            sprite.velocityX = 0;
+            sprite.velocityY = 0;
+            sprite.shoot(mediaPlayer);
+            Random random = new Random();
+            double chance = random.nextInt(60);
+            if (chance / DistanceToPlayer > 0) {
+                hurt += 100;
+                hurtPosition.add(new Pair<>(random.nextInt((int) Width), random.nextInt((int) Height)));
+                mediaPlayer = new MediaPlayer(playerHurt);
+                mediaPlayer.play();
+            }
+        }
+        else if(!wall && DistanceToPlayer >= 4 && DistanceToPlayer < 10 )
+        {
+
+            sprite.walk();
+            sprite.velocityX = Math.sin(enemyAngle);
+            sprite.velocityY = Math.cos(enemyAngle);
+        }
+        else if(wall)
+        {
+            sprite.velocityY = 0;
+            sprite.velocityX = 0;
+        }
     }
     public void drawStatic()
     {
@@ -455,7 +483,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 gc.drawImage(bloodSplatter.getSprite(), hurtPosition.get(i).getKey(), hurtPosition.get(i).getValue());
             }
             hurt--;
-            if(hurt%200 == 1 )
+            if(hurt%100 == 0 )
                 hurtPosition.remove(0);
         }
         gc.setFill(Color.RED);
@@ -588,19 +616,19 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
          if(code - 49 < weaponArrayList.size() && code - 49 >= 0)
              slot = code - 49;
     }
-    void sortEnemies()
+    void sortObjects()
     {
         ArrayList<Pair<Double, Integer>> indexArray = new ArrayList<>();
-        for(int i = 0; i < listOfEnemies.size(); i++)
+        for(int i = 0; i < listOfObjects.size(); i++)
         {
-            double dist = Math.pow(playerX - listOfEnemies.get(i).getPositionX(), 2) + Math.pow(playerY - listOfEnemies.get(i).getPositionY(),2);
+            double dist = Math.pow(playerX - listOfObjects.get(i).getPositionX(), 2) + Math.pow(playerY - listOfObjects.get(i).getPositionY(),2);
             indexArray.add(new Pair<>(dist,i));
         }
         indexArray.sort(Comparator.comparingDouble(Pair<Double,Integer>::getKey).thenComparingInt(Pair::getValue));
-        ArrayList<EnemySprite> copy = new ArrayList<>(listOfEnemies);
-        for (int i = 0; i < listOfEnemies.size(); i++)
+        ArrayList<ObjectSprite> copy = new ArrayList<>(listOfObjects);
+        for (int i = 0; i < listOfObjects.size(); i++)
         {
-            listOfEnemies.set(i, copy.get(indexArray.get(copy.size() - i - 1).getValue()));
+            listOfObjects.set(i, copy.get(indexArray.get(copy.size() - i - 1).getValue()));
         }
     }
 }

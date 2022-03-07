@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class EnemySprite extends ObjectSprite {
     public static int numberOfEnemies = 0;
-    int status = 0;
     private int health;
     private AnimatedSprite dieSprite;
     private AnimatedSprite painSprite;
@@ -22,14 +21,15 @@ public class EnemySprite extends ObjectSprite {
     private Media painSound;
     private Media deathSound;
     private Media weaponEnemySound;
-    boolean ai = true;
     boolean recentlyShoot = false;
     EnemySprite(double posX, double posY)
     {
         super(posX,posY);
+        status = 0;
+        ai = true;
         numberOfEnemies++;
         health = 50;
-        for(int i = 1; i < 9; i++)//caly obrot postaci
+        for(int i = 1; i <= 8; i++)//caly obrot postaci
         {
             defaultSprite.add(new Sprite(new File("sprites\\wsjheerpack\\mguard_s_1.bmp").toURI().toString(),getPositionY(),getPositionY(),Color.rgb(152,0,136)));
         }
@@ -77,9 +77,9 @@ public class EnemySprite extends ObjectSprite {
                 )
         );
         walkSprite = new ArrayList<>();
-        for(int i = 1; i <= 7; i++)//caly obrot postaci
+        for(int i = 1; i <= 8; i++)//caly obrot postaci
         {
-            walkSprite.add(new AnimatedSprite(0.100));
+            walkSprite.add(new AnimatedSprite(0.200));
             for(int j = 1; j <= 4; j++)
             {
                 walkSprite.get(i - 1).add(new Sprite(new File("sprites\\wsjheerpack\\mguard_w" + j + "_" + i + ".bmp").toURI().toString(),
@@ -113,7 +113,9 @@ public class EnemySprite extends ObjectSprite {
             if(health <= 0)
             {
                 ai = false;
-                status = 3;
+                velocityX = 0;
+                velocityY = 0;
+                status = 4;
                 dieSprite.anim(false);
                 setToDie();
                 mediaPlayer = new MediaPlayer(deathSound);
@@ -121,7 +123,7 @@ public class EnemySprite extends ObjectSprite {
             }
             else
             {
-                status = 2;
+                status = 3;
                 painSprite.anim(true);
                 hurting();
                 mediaPlayer = new MediaPlayer(painSound);
@@ -133,17 +135,29 @@ public class EnemySprite extends ObjectSprite {
     {
         if(ai && !getSynchroStatus())
         {
-            status = 1;
+            recentlyShoot = true;
+            status = 2;
             shootSprite.anim(true);
 
             //bardzo nieeleganckie - lepiej by bylo jakby samo animowanie sprite'u to ogarnialo
             getTimerStatusUpdate(shootSprite.getLength(), shootSprite.getDuration(), false);
-            recentlyShoot = true;
             setRecentlyShootTimer();//ja pierdole to jest jeszcze glupsze xDDDD
             //ale ogolnie chodzi o to by strzelal zalozmy co 3 sekundy
 
             mediaPlayer = new MediaPlayer(weaponEnemySound);
             mediaPlayer.play();
+        }
+    }
+    public void walk()
+    {
+        if(ai && !getSynchroStatus() && (velocityX > 0 || velocityY > 0))
+        {
+            status = 1;
+            walkSprite.get(0).anim(true);
+        }
+        else
+        {
+            status = 0;
         }
     }
     public void getTimerStatusUpdate(int CycleCount, double duration, boolean AiChange)
@@ -205,13 +219,17 @@ public class EnemySprite extends ObjectSprite {
         }
         else if(status == 1 && ai)
         {
-            return shootSprite.getFrame(shootSprite.pointer);
+            return walkSprite.get(0).getFrame(walkSprite.get(0).pointer);
         }
         else if(status == 2 && ai)
         {
+            return shootSprite.getFrame(shootSprite.pointer);
+        }
+        else if(status == 3 && ai)
+        {
             return painSprite.getFrame(painSprite.pointer);
         }
-        else if (status == 3 || !ai)
+        else if (status == 4 || !ai)
         {
             return dieSprite.getFrame(dieSprite.pointer);
         }
@@ -225,13 +243,17 @@ public class EnemySprite extends ObjectSprite {
         }
         else if(status == 1)
         {
-            return shootSprite.synchSprite;
+            return walkSprite.get(0).synchSprite;
         }
         else if(status == 2)
         {
+            return shootSprite.synchSprite;
+        }
+        else if(status == 3)
+        {
             return painSprite.synchSprite;
         }
-        else if (status == 3 || ai == false)
+        else if (status == 4 || ai == false)
         {
             return dieSprite.synchSprite;
         }

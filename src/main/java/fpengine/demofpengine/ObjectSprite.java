@@ -9,6 +9,8 @@ public class ObjectSprite {
     protected double velocityX = 0;
     protected double velocityY = 0;
     boolean toRemove = false;
+    boolean ai = false;
+    int status = Integer.MAX_VALUE;
     ObjectSprite(Sprite sprite, double posX, double posY)
     {
         defaultSprite = new ArrayList<>();

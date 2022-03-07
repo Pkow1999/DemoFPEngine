@@ -148,8 +148,7 @@ public class Controller{
                     clear(gc);
                     engine.move(elapsedTime);
                     engine.drawMap();
-                    engine.drawObjects();
-                    engine.drawEnemies();
+                    engine.drawObjects(elapsedTime);
                     engine.drawStatic();
                 });
         gameLoop.getKeyFrames().add( kf );
