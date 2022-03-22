@@ -49,7 +49,7 @@ public class Controller{
         engine = new EngineNew(gc);
         //runWithoutThread();
 
-        Media media = new Media(new File("C:\\Users\\pkow1\\IdeaProjects\\DemoFPEngine\\sounds\\TheWildSide.mp3").toURI().toString());
+        Media media = new Media(new File("sounds\\TheWildSide.mp3").toURI().toString());
         backgroundSound = new MediaPlayer(media);
         backgroundSound.setVolume(0.1);
         backgroundSound.setCycleCount(MediaPlayer.INDEFINITE);
@@ -135,7 +135,7 @@ public class Controller{
         gameLoop.setCycleCount( Timeline.INDEFINITE );
         start = System.nanoTime();
         KeyFrame kf = new KeyFrame(
-                Duration.millis(17),//ok. 25-30 klatek na sekunde
+                Duration.millis(17),//40 to ok. 25-30 klatek na sekunde, 17 to 60
                 event -> {
                     finish = System.nanoTime();
                     elapsedTime = finish - start;

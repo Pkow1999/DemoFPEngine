@@ -13,7 +13,7 @@ public class Weapon {
     AnimatedSprite weaponSprite;
     Media weaponSound;
     int currentAmmo;
-    int maxAmmo;
+    int maxAmmo = 30;
     double distance;
     boolean synchronization = false;
     int dmg;

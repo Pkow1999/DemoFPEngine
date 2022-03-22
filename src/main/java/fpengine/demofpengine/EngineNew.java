@@ -2,7 +2,7 @@ package fpengine.demofpengine;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.canvas.GraphicsContext;//WAZNE Info: FillRect bierze punkt x i punkt y a nastepnie DLUGOSC (nie punkty koncowe)
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
@@ -21,19 +21,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 //Oparte o: https://lodev.org/cgtutor/raycasting.html
 //oraz to: https://github.com/OneLoneCoder/videos/blob/master/OneLoneCoder_ComandLineFPS_2.cpp
 public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz fillrect ale nie obsluguje transparentnosci i malowania po blokach
-    double playerX = 2.0;
-    double playerY = 2.0;
-    double playerAngle;
-
-    double FOV = -Math.PI/4.0;// 45 stopni
-
+    Player player;
     //double FOV = -11.0 * Math.PI / 30.0;//66 stopni
 
     double Depth = 16.0;//maksymalny draw distance
-    Map plansza;
+    static Map plansza;
 
     private boolean left,right,forward,backward,strafeLeft,strafeRight,action,oldAction;
-
+    boolean side = false;
     Sprite wall;
     Sprite door;
     Sprite bWall;
@@ -51,17 +46,22 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     Media playerHurt;
     MediaPlayer mediaPlayer;
     ArrayList<Weapon> weaponArrayList;
-    int slot = 1;
-    int hurt;
     ArrayList<Pair<Integer,Integer>> hurtPosition;
     EngineNew(GraphicsContext context)
     {
+        player = new Player();
+        player.posX = 2.0;
+        player.posY = 2.0;
+        player.FOV =-Math.PI/4.0;// 45 stopni
+
         oldAction = false;
         hurtPosition = new ArrayList<>();
         try {
             plansza = new Map("Maps\\plansza1.txt");
         } catch (IOException e) {
             e.printStackTrace();
+            e.getMessage();
+            System.out.println("Error, loading map");
         }
        // plansza = new Map(16,16,true,(int)playerX,(int)playerY);
         gc = context;
@@ -79,11 +79,11 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         {
             pistol.add(
                     new Sprite(new File("sprites\\weapons\\pistol\\pistol" + i + ".bmp").toURI().toString(),300,300,
-                            (Controller.width - 300)/2,
-                            Controller.height - 300,
+                            (Width - 300)/2,
+                            Height - 300,
                             Color.rgb(152,0,136)
 
-                    )//Machine Gun Sprites
+                    )//Pistol Sprites
 
                     //by Z. Franz
             );
@@ -96,8 +96,8 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         {
             mg.add(
                     new Sprite(new File("sprites\\weapons\\machinegun\\mg" + i + ".bmp").toURI().toString(),300,300,
-                            (Controller.width - 300)/2,
-                            Controller.height - 300,
+                            (Width - 300)/2,
+                            Height - 300,
                             Color.rgb(152,0,136)
 
                     )//Machine Gun Sprites
@@ -136,9 +136,6 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         listOfObjects.add(new ObjectSprite(lamp,5,6 ));
 
 
-//        listOfEnemies.add(new EnemySprite(10.5,3.5));
-//        listOfEnemies.add(new EnemySprite(13.5,4));
-//        listOfEnemies.add(new EnemySprite(13.5,6.5));
         for(Pair XY : plansza.enemiesPosition)
         {
             int X = (int) XY.getKey();
@@ -150,7 +147,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     void drawMap()
     {
         for(int x = 0; x < Width; x+=sizeOfBlock) {
-            double RayAngle = (playerAngle - FOV / 2.0) + (x / Width) * FOV;//kat naszego promienia wystrzeliwanego co cala szerokosc obrazu
+            double RayAngle = (player.playerAngle - player.FOV / 2.0) + (x / Width) * player.FOV;//kat naszego promienia wystrzeliwanego co cala szerokosc obrazu
             double DistanceToWall = 0.0;
             double sampleX = 0.0;
 
@@ -177,25 +174,25 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             double rayLenght1Dy;
 
             //nasze indeksy do sprawdzenia czy znajduje sie w nich sciana
-            int mapCheckerX = (int) playerX;
-            int mapCheckerY = (int) playerY;
+            int mapCheckerX = (int) player.posX;
+            int mapCheckerY = (int) player.posY;
 
             //sprawdzenie w ktora strone sie patrzymy
             //jesli w lewo na naszej tabeli to indeksy sie beda nam zmniejszac
             if (EyeX < 0) {
                 stepx = -1;
-                rayLenght1Dx = (playerX - mapCheckerX) * Sx;
+                rayLenght1Dx = (player.posX - mapCheckerX) * Sx;
             } else {//jak w prawo to zwiekszac
                 stepx = 1;
-                rayLenght1Dx = (mapCheckerX + 1.0 - playerX) * Sx;
+                rayLenght1Dx = (mapCheckerX + 1.0 - player.posX) * Sx;
             }
             //jesli patrzymy w gore to zmniejszac
             if (EyeY < 0) {
                 stepy = -1;
-                rayLenght1Dy = (playerY - mapCheckerY) * Sy;
+                rayLenght1Dy = (player.posY - mapCheckerY) * Sy;
             } else {//jak w dol to zwiekszac
                 stepy = 1;
-                rayLenght1Dy = (mapCheckerY + 1.0 - playerY) * Sy;
+                rayLenght1Dy = (mapCheckerY + 1.0 - player.posY) * Sy;
             }
 
             //liczymy nasza odleglosc dopoki nie trafimy na sciane/drzwi albo nasz nasz draw distance sie skonczy
@@ -205,10 +202,12 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     mapCheckerX += stepx;//i nasz promien idzie w osi X
                     DistanceToWall = rayLenght1Dx;
                     rayLenght1Dx += Sx;
+                    side =false;
                 } else {
                     mapCheckerY += stepy;//albo w osi Y jesli promien jednowymiarowy Y byl mniejszy
                     DistanceToWall = rayLenght1Dy;
                     rayLenght1Dy += Sy;
+                    side = true;
                 }
                 //jak znajdujemy sie na mapie (a nie gdzies poza nia)
                 if (mapCheckerX >= 0 && mapCheckerX < plansza.getWidth() && mapCheckerY >= 0 && mapCheckerY < plansza.getHeight()) {
@@ -227,8 +226,8 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 double blockMidX = (double)mapCheckerX + 0.5;
                 double blockMidY = (double)mapCheckerY + 0.5;
 
-                double testPointX = playerX + EyeX * DistanceToWall;
-                double testPointY = playerY + EyeY * DistanceToWall;
+                double testPointX = player.posX + EyeX * DistanceToWall;
+                double testPointY = player.posY + EyeY * DistanceToWall;
 
                 double testAngle =  Math.atan2((testPointY - blockMidY),(testPointX - blockMidX));
                 if (testAngle >= -3.14159f * 0.25f && testAngle < 3.14159f * 0.25f)
@@ -241,13 +240,19 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                     sampleX = testPointY - mapCheckerY;
             }
 
+
             int ceiling = (int) ( (Height / 2.0) - (Height / DistanceToWall) );//im dalej sciana tym wiekszy sufit
             int floor = (int) (Height - ceiling);//jak jest duzy sufit to i podloga musi byc duza - basicaly odbicie lustrzane
             for(int i = 0; i < sizeOfBlock; i++)
                 Buffer[x + i] = DistanceToWall;
             for (int y = 0; y < Height; y += sizeOfBlock)//idziemy po wysokosci
-            {//sufitem sie nie zajmujemy bo robi to za nas funkcja clear
-                if (y > ceiling && y <= floor)
+            {
+                if(y <= ceiling)
+                {
+                    gc.setFill(Color.DARKGRAY);
+                    gc.fillRect(x, y, sizeOfBlock, sizeOfBlock);
+                }
+                else if (y > ceiling && y <= floor)
                 {
                     double sampleY = ((double)y - (double)ceiling) / ((double)floor - (double)ceiling);
 
@@ -289,11 +294,13 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
                 }
             }
+
         }
     }
 
-    public void drawObjects(double fps)
+    public void drawObjects(double elapsedTime)
     {
+        boolean drop = false;
         sortObjects();//to sortowanie... dziala.. sprite'y sie nie nakladaja ale boje sie o performence poprzez kopiowanie calej tablicy
         //jak wymysle/znajde sposob by jej nie kopiowac to poprawie ale nie jest to duzy priorytem
         //choc wymaga wiecej testowania bo nie wiem jak sie zachowuje przy duzej ilosci sprite'ow
@@ -301,21 +308,21 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         {
 
 
-            sprite.positionX -= sprite.velocityX * fps;
-            sprite.positionY -= sprite.velocityY * fps;
+            sprite.positionX -= sprite.velocityX * elapsedTime;
+            sprite.positionY -= sprite.velocityY * elapsedTime;
             if(plansza.getMap((int)sprite.getPositionX(), (int)sprite.getPositionY()) == 'X')
             {
 
-                sprite.positionX += sprite.velocityX * fps;
-                sprite.positionY += sprite.velocityY * fps;
+                sprite.positionX += sprite.velocityX * elapsedTime;
+                sprite.positionY += sprite.velocityY * elapsedTime;
             }
-            double vecX = sprite.getPositionX() - playerX;
-            double vecY = sprite.getPositionY() - playerY;
+            double vecX = sprite.getPositionX() - player.posX;
+            double vecY = sprite.getPositionY() - player.posY;
             double DistanceFromPlayer = Math.sqrt(vecX * vecX + vecY * vecY);
 
 
-            double EyeX = Math.sin(playerAngle);
-            double EyeY = Math.cos(playerAngle);
+            double EyeX = Math.sin(player.playerAngle);
+            double EyeY = Math.cos(player.playerAngle);
             double objectAngle = Math.atan2(EyeY, EyeX) - Math.atan2(vecY,vecX);
 
 
@@ -324,7 +331,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             if(objectAngle > Math.PI)
                 objectAngle -= 2.0 * Math.PI;
 
-            boolean inPlayerFov = Math.abs(objectAngle) < Math.abs( FOV );//jak jest normalny fov to nie ma pop upu od srodka sprite'a
+            boolean inPlayerFov = Math.abs(objectAngle) < Math.abs(player.FOV);//jak jest normalny fov to nie ma pop upu od srodka sprite'a
 
             if(sprite.ai)
             {
@@ -337,7 +344,7 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                 int objectHeight = objectFloor - objectCeiling;
                 double objectAspectRatio = sprite.getHeight() / sprite.getWidth();
                 int objectWidth = (int)(objectHeight / objectAspectRatio);
-                double middleOfObject = (2.0 * (objectAngle / (FOV * 2.0)) + 0.5) * Width;
+                double middleOfObject = (2.0 * (objectAngle / (player.FOV * 2.0)) + 0.5) * Width;
 
                 //sprobujmy zrobic to samo dla ludzi
                 int ratio = 1;
@@ -361,16 +368,16 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
                                 Buffer[objectColumn] = DistanceFromPlayer;
                                 // gc.getPixelWriter().setColor(objectColumn, (int) (objectCeiling + ly),sprite.getSampleColor(sampleX,sampleY));
 
-                                if(Math.abs(objectAngle) <Math.abs( FOV / 8.0) && action) //jesli jest w naszym polu widzenia i jest wykonywana akcja strzelania
+                                if(Math.abs(objectAngle) <Math.abs( player.FOV / 8.0) && action) //jesli jest w naszym polu widzenia i jest wykonywana akcja strzelania
                                 {
                                     //funny thing - status 0 to zwykle stanie a status 1 strzelanie
                                     //ten status jest po to aby nie zalapalo nam przez przypadek kilku dmgu w trakcie jednego strzalu
                                     //tzn dmg dostaje tylko jak nic nie robi albo strzela
                                     //w innym wypadku gra pokazuje animacje dostawania bolu (ktora jest na tyle krotka ze czlowiek nie powinien zwrocic uwagi na to ze ktos jest niewrazliwy)
                                     //(albo jest martwy co w sumie sprawia ze i tak nie powinien dostawac zadnego dmg)
-                                    if(sprite.status < 3 && weaponArrayList.get(slot).synchronization && weaponArrayList.get(slot).weaponSprite.pointer == 0 && DistanceFromPlayer < weaponArrayList.get(slot).distance)//jesli nasz przeciwnik nie wykonuje zadnej animacji oraz bron nie wykonuje zadnej animacji oraz jestesmy w odpowiednim dystansie
+                                    if(sprite.status < 3 && weaponArrayList.get(player.slot).synchronization && weaponArrayList.get(player.slot).weaponSprite.pointer == 0 && DistanceFromPlayer < weaponArrayList.get(player.slot).distance)//jesli nasz przeciwnik nie wykonuje zadnej animacji oraz bron nie wykonuje zadnej animacji oraz jestesmy w odpowiednim dystansie
                                     {//sprite status o wartosci maxValue to stale sprite'y
-                                        int dmg = (int) (weaponArrayList.get(slot).dmg / (DistanceFromPlayer/3.0 ));
+                                        int dmg = (int) (weaponArrayList.get(player.slot).dmg / (DistanceFromPlayer/3.0 ));
                                         EnemySprite enemy = (EnemySprite)  sprite;
                                         enemy.getDMG(dmg, mediaPlayer);//go kill
                                     }
@@ -448,54 +455,80 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
             else wall = true;
         }
 
-        if (!sprite.recentlyShoot && DistanceToPlayer <= 4.0 && !wall) {
-            sprite.velocityX = 0;
-            sprite.velocityY = 0;
+        if(!wall && DistanceToPlayer >= 4 && DistanceToPlayer < 10 )
+        {
+
+            sprite.velocityX = Math.sin(enemyAngle);
+            sprite.velocityY = Math.cos(enemyAngle);
+            sprite.walk();
+        }
+        else if (!sprite.recentlyShoot && DistanceToPlayer <= 4.0 && !wall)
+        {
             sprite.shoot(mediaPlayer);
             Random random = new Random();
-            double chance = random.nextInt(60);
-            if (chance / DistanceToPlayer > 0) {
-                hurt += 100;
+            double chance = random.nextInt((int) (player.strafing ? 100 - 10 * DistanceToPlayer : 100 - 6 * DistanceToPlayer));
+            double rng = random.nextInt(100);
+            System.out.println("CHANCE: " + chance);
+            System.out.println("RNG: " + rng);
+            System.out.println();
+            if (rng < chance)
+            {
+                player.Health -= sprite.myDmg;
+                player.hurt += 100;
                 hurtPosition.add(new Pair<>(random.nextInt((int) Width), random.nextInt((int) Height)));
                 mediaPlayer = new MediaPlayer(playerHurt);
                 mediaPlayer.play();
             }
         }
-        else if(!wall && DistanceToPlayer >= 4 && DistanceToPlayer < 10 )
-        {
-
-            sprite.walk();
-            sprite.velocityX = Math.sin(enemyAngle);
-            sprite.velocityY = Math.cos(enemyAngle);
-        }
         else if(wall)
         {
             sprite.velocityY = 0;
             sprite.velocityX = 0;
+            sprite.walk();
         }
     }
     public void drawStatic()
     {
-        if(hurt > 0)
+        if(player.hurt > 0)
         {
             for(int i = 0; i < hurtPosition.size(); i++)
             {
                 gc.drawImage(bloodSplatter.getSprite(), hurtPosition.get(i).getKey(), hurtPosition.get(i).getValue());
             }
-            hurt--;
-            if(hurt%100 == 0 )
+            player.hurt--;
+            if(player.hurt%100 == 0 )
                 hurtPosition.remove(0);
         }
-        gc.setFill(Color.RED);
+        gc.setFill(Color.WHITE);
+        gc.setFont(Font.font("Consolas",7));
         gc.fillText(plansza.export(),0,5);
-        gc.drawImage(weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getSprite(),weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getPositionX(),weaponArrayList.get(slot).weaponSprite.getFrame(weaponArrayList.get(slot).weaponSprite.pointer).getPositionY());//bronkie rysujemy co klatke
+        gc.setFont(Font.font("Consolas",20));
+        gc.fillText(String.valueOf(EnemySprite.numberOfEnemies), Width - 30, 40);
+
+        double ramka = 5;
+        double px = 20;
+        double py = Height - 40;
+        double lx = 180;
+        double ly = 20;
+
+        gc.setFill(Color.DARKGRAY);
+        gc.fillRoundRect(px,py,lx,ly,5,5);
+        gc.setFill(Color.GRAY);
+
+        gc.fillRect(px + ramka,py + ramka,lx - 2 * ramka,ly - 2* ramka);//5 pikseli to obwodka wiec punkt poczatkowy to jest +5 a koncowy -2 razy wartosc obwodki
+
+        gc.setFill(Color.RED);
+        gc.fillRect(px + ramka,py + ramka,lx * (double) player.Health / player.maxHealth - 2 * ramka, ly - 2*ramka);
+
+        gc.fillText("Ammo:" + String.valueOf(weaponArrayList.get(player.slot).currentAmmo) + "/" + String.valueOf(weaponArrayList.get(player.slot).maxAmmo), Width - 150, Height - 25);
+        gc.drawImage(weaponArrayList.get(player.slot).weaponSprite.getFrame(weaponArrayList.get(player.slot).weaponSprite.pointer).getSprite(),weaponArrayList.get(player.slot).weaponSprite.getFrame(weaponArrayList.get(player.slot).weaponSprite.pointer).getPositionX(),weaponArrayList.get(player.slot).weaponSprite.getFrame(weaponArrayList.get(player.slot).weaponSprite.pointer).getPositionY());//bronkie rysujemy co klatke
     }
-    public void move(double fps)
+    public void move(double elapsedTime)
     {
-        int oldPLayerX = (int) playerX;
-        int oldPlayerY = (int) playerY;
-        if(!oldAction || slot > 1)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz, ogien ciagly jest mozliwy dla pistoletu maszynowego
-            if(!weaponArrayList.get(slot).synchronization)//nie jest wykonywana animacja
+        int oldPLayerX = (int) player.posX;
+        int oldPlayerY = (int) player.posY;
+        if(!oldAction || player.slot > 1)//to gwarantuje mi ze jak nacisniemy przycisk akcji to zostanie on wykonany raz, ogien ciagly jest mozliwy dla pistoletu maszynowego
+            if(!weaponArrayList.get(player.slot).synchronization)//nie jest wykonywana animacja
                 if(action)
                 {
                     shoot();
@@ -503,64 +536,78 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
         if(right)
         {
-            playerAngle -= 1.5 * fps;
+            player.playerAngle -= 1.5 * elapsedTime;
         }
         if(left)
         {
-            playerAngle += 1.5 * fps;
+            player.playerAngle += 1.5 * elapsedTime;
         }
         if(forward)
         {
-            playerX += Math.sin(playerAngle) * 4 * fps;
-            playerY += Math.cos(playerAngle) * 4 * fps;
+//            player.posX += Math.sin(player.playerAngle) * 4 * elapsedTime;
+//            player.posY += Math.cos(player.playerAngle) * 4 * elapsedTime;
 
-
-            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
-            {
-                playerX -= Math.sin(playerAngle) * 4 * fps;
-                playerY -= Math.cos(playerAngle) * 4 * fps;
-            }
+            player.velX += Math.sin(player.playerAngle) * 4 * elapsedTime;
+            player.velY += Math.cos(player.playerAngle) * 4 * elapsedTime;
+//
+//            if(plansza.getMap((int) player.posX,(int) player.posY) == 'X' || plansza.getMap((int) player.posX,(int) player.posY) == 'H')
+//            {
+//                player.posX -= Math.sin(player.playerAngle) * 4 * elapsedTime;
+//                player.posY -= Math.cos(player.playerAngle) * 4 * elapsedTime;
+//            }
         }
         if(backward)
         {
-            playerX -= Math.sin(playerAngle) * 4 * fps;
-            playerY -= Math.cos(playerAngle) * 4 * fps;
+//            player.posX -= Math.sin(player.playerAngle) * 4 * elapsedTime;
+//            player.posY -= Math.cos(player.playerAngle) * 4 * elapsedTime;
+//
 
-            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
-            {
-                playerX += Math.sin(playerAngle) * 4 * fps;
-                playerY += Math.cos(playerAngle) * 4 * fps;
-            }
+            player.velX += -Math.sin(player.playerAngle) * 4 * elapsedTime;
+            player.velY += -Math.cos(player.playerAngle) * 4 * elapsedTime;
+
+//            if(plansza.getMap((int) player.posX,(int) player.posY) == 'X' || plansza.getMap((int) player.posX,(int) player.posY) == 'H')
+//            {
+//                player.posX += Math.sin(player.playerAngle) * 4 * elapsedTime;
+//                player.posY += Math.cos(player.playerAngle) * 4 * elapsedTime;
+//            }
         }
         if(strafeLeft)
         {
-            playerX += Math.cos(playerAngle) * 4 * fps;
-            playerY -= Math.sin(playerAngle) * 4 * fps;
+//            player.posX += Math.cos(player.playerAngle) * 4 * elapsedTime;
+//            player.posY -= Math.sin(player.playerAngle) * 4 * elapsedTime;
 
+            player.velX += Math.cos(player.playerAngle) * 4 * elapsedTime;
+            player.velY += -Math.sin(player.playerAngle) * 4 * elapsedTime;
 
-            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
-            {
-                playerX -= Math.cos(playerAngle) * 4 * fps;
-                playerY += Math.sin(playerAngle) * 4 * fps;
-            }
+//            if(plansza.getMap((int) player.posX,(int) player.posY) == 'X' || plansza.getMap((int) player.posX,(int) player.posY) == 'H')
+//            {
+//                player.posX -= Math.cos(player.playerAngle) * 4 * elapsedTime;
+//                player.posY += Math.sin(player.playerAngle) * 4 * elapsedTime;
+//            }
         }
         if(strafeRight)
         {
 
-            playerX -= Math.cos(playerAngle) * 4 * fps;
-            playerY += Math.sin(playerAngle) * 4 * fps;
+//            player.posX -= Math.cos(player.playerAngle) * 4 * elapsedTime;
+//            player.posY += Math.sin(player.playerAngle) * 4 * elapsedTime;
 
 
-            if(plansza.getMap((int) playerX,(int) playerY) == 'X' || plansza.getMap((int) playerX,(int) playerY) == 'H')
-            {
-                playerX += Math.cos(playerAngle) * 4 * fps;
-                playerY -= Math.sin(playerAngle) * 4 * fps;
-            }
+            player.velX += -Math.cos(player.playerAngle) * 4 * elapsedTime;
+            player.velY += Math.sin(player.playerAngle) * 4 * elapsedTime;
+
+//            if(plansza.getMap((int) player.posX,(int) player.posY) == 'X' || plansza.getMap((int) player.posX,(int) player.posY) == 'H')
+//            {
+//                player.posX += Math.cos(player.playerAngle) * 4 * elapsedTime;
+//                player.posY -= Math.sin(player.playerAngle) * 4 * elapsedTime;
+//            }
         }
-        if(plansza.getMap((int) playerX,(int) playerY) == 'd')
-            openDoor((int) playerX, (int) playerY);
+        player.updatePosition();
+        player.velX = 0;
+        player.velY = 0;
+        if(plansza.getMap((int) player.posX,(int) player.posY) == 'd')
+            openDoor((int) player.posX, (int) player.posY);
         plansza.setMap(oldPLayerX, oldPlayerY, '.');
-        plansza.setMap((int) playerX, (int) playerY, 'P');
+        plansza.setMap((int) player.posX, (int) player.posY, 'P');
         oldAction = action;//zapisujemy poprzednia wartosc w celu identyfikacji czy nie robimy akcji kilka razy pod rzad
     }
     void openDoor(int X, int Y)
@@ -580,13 +627,10 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
         mediaPlayer.play();
     }
     void shoot() {
-        if(weaponArrayList.get(slot).currentAmmo > 0)
-            weaponArrayList.get(slot).shoot(mediaPlayer);
+        if(weaponArrayList.get(player.slot).currentAmmo > 0)
+            weaponArrayList.get(player.slot).shoot(mediaPlayer);
     }
-    public void LEFT(boolean input)
-    {
-        left = input;
-    }
+    public void LEFT(boolean input) {left = input;}
     public void RIGHT(boolean input)
     {
         right = input;
@@ -602,10 +646,12 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
     public void STRAFELEFT(boolean input)
     {
         strafeLeft = input;
+        player.strafing = input;
     }
     public void STRAFERIGHT(boolean input)
     {
         strafeRight = input;
+        player.strafing = input;
     }
     public void ACTION(boolean input)
     {
@@ -614,14 +660,14 @@ public class EngineNew {//DYGRESJA - PixelWriter jest zdecydowanie szybszy niz f
 
     public void SLOT(int code) {
          if(code - 49 < weaponArrayList.size() && code - 49 >= 0)
-             slot = code - 49;
+             player.slot = code - 49;
     }
     void sortObjects()
     {
         ArrayList<Pair<Double, Integer>> indexArray = new ArrayList<>();
         for(int i = 0; i < listOfObjects.size(); i++)
         {
-            double dist = Math.pow(playerX - listOfObjects.get(i).getPositionX(), 2) + Math.pow(playerY - listOfObjects.get(i).getPositionY(),2);
+            double dist = Math.pow(player.posX - listOfObjects.get(i).getPositionX(), 2) + Math.pow(player.posY - listOfObjects.get(i).getPositionY(),2);
             indexArray.add(new Pair<>(dist,i));
         }
         indexArray.sort(Comparator.comparingDouble(Pair<Double,Integer>::getKey).thenComparingInt(Pair::getValue));

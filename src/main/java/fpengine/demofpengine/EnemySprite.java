@@ -12,16 +12,41 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class EnemySprite extends ObjectSprite {
+    /**Statyczna zmienna przechowywująca ilość przeciwników na mapie*/
     public static int numberOfEnemies = 0;
+
+    /**Zmienna przechowywująca aktualną ilość zdrowia przeciwnika*/
     private int health;
+
+    /**Zmienna przechowywująca każdą klatkę animacji śmierci przeciwnika*/
     private AnimatedSprite dieSprite;
+
+    /**Zmienna przechowywująca każdą klatkę animacji dostawania obrażeń przeciwnika*/
     private AnimatedSprite painSprite;
+
+    /**Zmienna przechowywująca każdą klatkę animacji strzelania przeciwnika*/
     private AnimatedSprite shootSprite;
+
+    /**Tablica przechowywująca każdą klatkę animacji chodzenia przeciwnika w ośmiu kierunkach*/
     private ArrayList<AnimatedSprite> walkSprite;
+
+    Sprite drop;
+
+    /**Zmienna przechowywująca referencję do dźwięku bólu przeciwnika*/
     private Media painSound;
+
+    /**Zmienna przechowywująca referencję do dźwięku śmierci przeciwnika*/
     private Media deathSound;
+
+    /**Zmienna przechowywująca referencję do dźwięku wystrzału z broni przeciwnika*/
     private Media weaponEnemySound;
+
+    /**Zmienna przechowywująca czy nasz przeciwnik nie dawno wykonal atak i przysługuje mu cooldown na niego*/
     boolean recentlyShoot = false;
+
+    /**Zmienna przechowywująca obrażenia zadawane przez tego przeciwnika*/
+    int myDmg = 8;
+    /**Konstruktor przyjmujący pozycję przeciwnika*/
     EnemySprite(double posX, double posY)
     {
         super(posX,posY);
@@ -89,6 +114,8 @@ public class EnemySprite extends ObjectSprite {
         painSound = new Media(new File("sounds\\EnemyPain.wav").toURI().toString());
         deathSound = new Media(new File("sounds\\Death" + (int)(Math.random() * (2 - 1 + 1) + 1) + ".wav").toURI().toString());
         weaponEnemySound = new Media(new File("sounds\\MachineGunEnemy.wav").toURI().toString());
+        drop = new Sprite(new File("sprites\\mp7hl2\\mp7hl2pickup.bmp").toURI().toString(), Color.rgb(152,0,136));
+
     }
     public double getVelocityX() {
         return velocityX;
@@ -105,23 +132,25 @@ public class EnemySprite extends ObjectSprite {
     public void setVelocityY(double velocityY) {
         this.velocityY = velocityY;
     }
+
+    /**Funkcja obsługująca dostawanie obrażeń przez przeciwnika*/
     public void getDMG(int dmg,MediaPlayer mediaPlayer)
     {
         if(ai)
         {
             health = health - dmg;
-            if(health <= 0)
+            if(health <= 0)//nasz przeciwnik nie zyje
             {
                 ai = false;
                 velocityX = 0;
                 velocityY = 0;
                 status = 4;
                 dieSprite.anim(false);
-                setToDie();
+                setToDie();//ustawiamy czyszczenie, zeby po paru sekundach sprite nam zniknal
                 mediaPlayer = new MediaPlayer(deathSound);
                 mediaPlayer.play();
             }
-            else
+            else//zyje, dostal obrazenia
             {
                 status = 3;
                 painSprite.anim(true);
@@ -131,9 +160,10 @@ public class EnemySprite extends ObjectSprite {
             }
         }
     }
+    /**Funkcja obsługująca strzelanie sprite'u*/
     public void shoot(MediaPlayer mediaPlayer)
     {
-        if(ai && !getSynchroStatus())
+        if(ai && !getSynchroStatus())//jesli ai jest wlaczone, oraz nie wykonuje zadnej czynnosci
         {
             recentlyShoot = true;
             status = 2;
@@ -148,6 +178,8 @@ public class EnemySprite extends ObjectSprite {
             mediaPlayer.play();
         }
     }
+
+    /**Funkcja obsługująca chodzenie przeciwnika*/
     public void walk()
     {
         if(ai && !getSynchroStatus() && (velocityX > 0 || velocityY > 0))
@@ -160,6 +192,8 @@ public class EnemySprite extends ObjectSprite {
             status = 0;
         }
     }
+
+    /**Funkcja obsługująca timer który zwraca ai przeciwnikowi*/
     public void getTimerStatusUpdate(int CycleCount, double duration, boolean AiChange)
     {
         if(AiChange)
@@ -169,6 +203,8 @@ public class EnemySprite extends ObjectSprite {
         AtomicInteger i = new AtomicInteger();
         KeyFrame kf = new KeyFrame(Duration.seconds(duration),
                 event -> {
+                    velocityX = 0;
+                    velocityY = 0;
                     if(i.incrementAndGet() > CycleCount - 1) {
                         status = 0;
                         if(AiChange)
@@ -178,13 +214,16 @@ public class EnemySprite extends ObjectSprite {
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
     }
+
     public void hurting()
     {
         getTimerStatusUpdate(painSprite.getLength(),painSprite.getDuration(),true);
     }
 
+    /**Funkcja obsługująca timer w celu ustawienia przeciwnika do usunięcia po nastu-sekundach*/
     public void setToDie()
     {
+        numberOfEnemies--;
         Timeline gameLoop = new Timeline();
         gameLoop.setCycleCount( 10 );
         AtomicInteger i = new AtomicInteger();
@@ -196,6 +235,8 @@ public class EnemySprite extends ObjectSprite {
         gameLoop.getKeyFrames().add( kf );
         gameLoop.play();
     }
+
+    /**Funkcja obsługująca cooldown strzelania*/
     public void setRecentlyShootTimer()
     {
         Timeline gameLoop = new Timeline();
@@ -210,6 +251,8 @@ public class EnemySprite extends ObjectSprite {
         gameLoop.play();
     }
 
+
+    /**Funkcja obsługująca zwracanie odpowiedniej klatki grafiki w zależności od trybu działania przeciwnika*/
     @Override
     public Sprite getCurrentSprite()
     {
@@ -235,6 +278,8 @@ public class EnemySprite extends ObjectSprite {
         }
         return null;
     }
+
+    /**Funkcja zwracająca czy jakaś animacja jest wykonywana*/
     public boolean getSynchroStatus()
     {
         if(status == 0)
@@ -243,7 +288,7 @@ public class EnemySprite extends ObjectSprite {
         }
         else if(status == 1)
         {
-            return walkSprite.get(0).synchSprite;
+            return false;//zwracamy false przy chodzeniu bo chcemy zeby wykonywal inne akcje jak chodzi, w innym wypadku moze nam sie zablkowac i przestac strzelac
         }
         else if(status == 2)
         {
@@ -253,7 +298,7 @@ public class EnemySprite extends ObjectSprite {
         {
             return painSprite.synchSprite;
         }
-        else if (status == 4 || ai == false)
+        else if (status == 4 || ai == false)//jest na koncu wiec jak dostanie obrazenia to nie wezmie tego pod uwage, ale moze sie zdarzyc ze jakims cudem umrze i chcemy by uzywal dobrego sprite'u
         {
             return dieSprite.synchSprite;
         }
