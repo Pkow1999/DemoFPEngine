@@ -9,8 +9,5 @@
         <module name="DemoFPEngine" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="DemoFPEngine" target="17" />
-    </bytecodeTargetLevel>
   </component>
 </project>
